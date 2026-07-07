@@ -10,17 +10,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        email: { label: "Email", type: "email" },
+        identifier: { label: "Email or Faculty ID", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const email = credentials?.email;
+        const identifier = credentials?.identifier;
         const password = credentials?.password;
-        if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
+        if (typeof identifier !== "string" || typeof password !== "string" || !identifier || !password) {
           return null;
         }
 
-        const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+        const trimmed = identifier.trim();
+        const user = trimmed.includes("@")
+          ? await prisma.user.findUnique({ where: { email: trimmed.toLowerCase() } })
+          : await prisma.user.findUnique({ where: { employeeCode: trimmed } });
         if (!user) return null;
 
         const valid = await bcrypt.compare(password, user.passwordHash);

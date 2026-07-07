@@ -121,7 +121,7 @@ export default function AttendancePortal() {
   const [tab, setTab] = useState("dash");
 
   // Real login form state
-  const [loginEmail, setLoginEmail] = useState("");
+  const [loginIdentifier, setLoginIdentifier] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
@@ -161,6 +161,10 @@ export default function AttendancePortal() {
   const [stCut, setStCut] = useState(3);
   const [saved, setSaved] = useState(false);
   const [onOfficeNetwork, setOnOfficeNetwork] = useState(true);
+
+  // Monthly report filters
+  const [repQuery, setRepQuery] = useState("");
+  const [repDept, setRepDept] = useState("");
 
   const [now, setNow] = useState(new Date());
 
@@ -266,7 +270,7 @@ export default function AttendancePortal() {
     setLoginLoading(true);
     try {
       const res = await signIn("credentials", {
-        email: loginEmail,
+        identifier: loginIdentifier,
         password: loginPassword,
         redirect: false,
       });
@@ -500,6 +504,10 @@ export default function AttendancePortal() {
   });
   const totalLates = [...reportByUser.values()].reduce((a, e) => a + e.late, 0);
   const totalCuts = [...reportByUser.values()].reduce((a, e) => a + Math.floor(e.late / Number(stCut || 3)), 0);
+  const reportDepts = [...new Set(reportRows.map((r) => r.dept))].sort();
+  const filteredReportRows = reportRows.filter(
+    (r) => (!repDept || r.dept === repDept) && (!repQuery || r.name.toLowerCase().includes(repQuery.toLowerCase()))
+  );
 
   const leaveRows = leaves.map((l) => {
     const p = pill(l.status);
@@ -540,8 +548,8 @@ export default function AttendancePortal() {
           <div style={{ color: "#6f6a85", fontSize: 15, marginBottom: 22 }}>Faculty Attendance &amp; Workforce Suite</div>
           <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#57506e" }}>Email</label>
-              <input type="email" required autoComplete="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="you@timescomputers.com" style={inputStyle} />
+              <label style={{ fontSize: 13, fontWeight: 600, color: "#57506e" }}>Email or Faculty ID</label>
+              <input type="text" required autoComplete="username" value={loginIdentifier} onChange={(e) => setLoginIdentifier(e.target.value)} placeholder="you@timescomputers.com or FAC-101" style={inputStyle} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <label style={{ fontSize: 13, fontWeight: 600, color: "#57506e" }}>Password</label>
@@ -887,13 +895,40 @@ export default function AttendancePortal() {
                 <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 32, marginTop: 4 }}>{totalCuts}</div>
               </div>
             </div>
+            <div style={{ ...glass, padding: "18px 22px", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <input
+                placeholder="Search faculty by name…"
+                value={repQuery}
+                onChange={(e) => setRepQuery(e.target.value)}
+                style={{ flex: 1.5, minWidth: 200, padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, outline: "none" }}
+              />
+              <select
+                value={repDept}
+                onChange={(e) => setRepDept(e.target.value)}
+                style={{ flex: 1, minWidth: 160, padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, outline: "none" }}
+              >
+                <option value="">All departments</option>
+                {reportDepts.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+              {(repQuery || repDept) && (
+                <button
+                  onClick={() => { setRepQuery(""); setRepDept(""); }}
+                  style={{ padding: "10px 16px", border: "1px solid rgba(109,90,230,0.2)", borderRadius: 12, background: "transparent", color: "#57506e", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                >
+                  Clear
+                </button>
+              )}
+              <div style={{ fontSize: 12.5, color: "#a29dbb" }}>Showing {filteredReportRows.length} of {reportRows.length}</div>
+            </div>
             <div style={{ ...glass, padding: "22px 26px" }}>
               <div style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
                 <div>FACULTY</div><div>DEPARTMENT</div><div>PRESENT</div><div>LATE</div><div>ABSENT</div><div>LEAVE</div><div>HOURS</div><div>DEDUCTION</div>
               </div>
               <div style={{ maxHeight: 560, overflowY: "auto" }}>
-                {reportRows.length === 0 && <div style={{ padding: "16px 10px", color: "#a29dbb", fontSize: 13.5 }}>No attendance recorded this month yet.</div>}
-                {reportRows.map((r, i) => (
+                {filteredReportRows.length === 0 && <div style={{ padding: "16px 10px", color: "#a29dbb", fontSize: 13.5 }}>No matching records.</div>}
+                {filteredReportRows.map((r, i) => (
                   <div key={i} style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5, background: r.rowBg, borderRadius: 10 }}>
                     <div style={{ fontWeight: 600 }}>{r.name}</div>
                     <div style={{ color: "#57506e" }}>{r.dept}</div>
