@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, type CSSProperties } from "react";
+import { useState, useEffect, useCallback, type CSSProperties } from "react";
 import Image from "next/image";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 type PillStyle = { bg: string; color: string };
 type Employee = {
@@ -19,6 +20,15 @@ type Employee = {
 };
 type Notice = { id: number; title: string; body: string; priority: string; date: string };
 type Leave = { id: number; name: string; dept: string; type: string; range: string; reason: string; status: string };
+type DbUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "ADMIN" | "EMPLOYEE";
+  department: string;
+  jobTitle: string;
+  createdAt: string;
+};
 
 const glass: CSSProperties = {
   background: "rgba(255,255,255,0.55)",
@@ -51,17 +61,6 @@ const primaryBtn: CSSProperties = {
   fontWeight: 700,
   cursor: "pointer",
   boxShadow: "0 10px 24px rgba(109,90,230,0.35)",
-};
-
-const secondaryBtn: CSSProperties = {
-  padding: "15px",
-  border: "1px solid rgba(109,90,230,0.3)",
-  borderRadius: "16px",
-  background: "rgba(255,255,255,0.6)",
-  color: "#5a48c9",
-  fontSize: "15px",
-  fontWeight: 700,
-  cursor: "pointer",
 };
 
 const sora = "var(--font-sora), sans-serif";
@@ -110,15 +109,30 @@ function seedEmployees(): Employee[] {
 }
 
 export default function AttendancePortal() {
-  const [view, setView] = useState<"login" | "employee" | "admin">("login");
+  const { data: session, status } = useSession();
   const [tab, setTab] = useState("dash");
+
+  // Real login form state
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  // Real DB-backed user management (Employees tab, admin only)
+  const [dbUsers, setDbUsers] = useState<DbUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [neEmail, setNeEmail] = useState("");
+  const [nePassword, setNePassword] = useState("");
+  const [neRoleField, setNeRoleField] = useState<"ADMIN" | "EMPLOYEE">("EMPLOYEE");
+  const [createUserError, setCreateUserError] = useState<string | null>(null);
+  const [createUserLoading, setCreateUserLoading] = useState(false);
   const [now, setNow] = useState(new Date());
   const [checkedIn, setCheckedIn] = useState(false);
   const [checkedOut, setCheckedOut] = useState(false);
   const [checkInAt, setCheckInAt] = useState<string | null>(null);
   const [checkOutAt, setCheckOutAt] = useState<string | null>(null);
   const [checkInLate, setCheckInLate] = useState(false);
-  const [employees, setEmployees] = useState<Employee[]>(seedEmployees);
+  const [employees] = useState<Employee[]>(seedEmployees);
   const [notices, setNotices] = useState<Notice[]>([
     { id: 1, title: "Eid holidays announced", body: "Office will remain closed from July 27 to July 29. Attendance resumes July 30, 9:00 AM sharp.", priority: "Important", date: "Jul 2, 2026 · 10:15 AM" },
     { id: 2, title: "New attendance policy", body: "Check-in after 9:05 AM is marked late. Three lates in a month will deduct one day of salary.", priority: "Urgent", date: "Jul 1, 2026 · 9:00 AM" },
@@ -144,7 +158,6 @@ export default function AttendancePortal() {
   const [neName, setNeName] = useState("");
   const [neDept, setNeDept] = useState("");
   const [neRole, setNeRole] = useState("");
-  const [q, setQ] = useState("");
   const [ntTitle, setNtTitle] = useState("");
   const [ntBody, setNtBody] = useState("");
   const [ntPriority, setNtPriority] = useState("Normal");
@@ -154,6 +167,88 @@ export default function AttendancePortal() {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  const loadUsers = useCallback(async () => {
+    setUsersLoading(true);
+    try {
+      const res = await fetch("/api/admin/users");
+      if (res.ok) {
+        const data = await res.json();
+        setDbUsers(data.users);
+      }
+    } finally {
+      setUsersLoading(false);
+    }
+  }, []);
+
+  function goToUsersTab() {
+    setTab("emp");
+    void loadUsers();
+  }
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginError(null);
+    setLoginLoading(true);
+    try {
+      const res = await signIn("credentials", {
+        email: loginEmail,
+        password: loginPassword,
+        redirect: false,
+      });
+      if (!res || res.error) {
+        setLoginError("Invalid email or password.");
+      } else {
+        setLoginPassword("");
+      }
+    } finally {
+      setLoginLoading(false);
+    }
+  }
+
+  async function createUser() {
+    setCreateUserError(null);
+    if (!neName || !neEmail || !nePassword) {
+      setCreateUserError("Name, email and password are required.");
+      return;
+    }
+    setCreateUserLoading(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: neName,
+          email: neEmail,
+          password: nePassword,
+          role: neRoleField,
+          department: neDept || "General",
+          jobTitle: neRole || "Staff",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCreateUserError(data.error || "Failed to create user.");
+        return;
+      }
+      setDbUsers((us) => [data.user, ...us]);
+      setNeName("");
+      setNeEmail("");
+      setNePassword("");
+      setNeDept("");
+      setNeRole("");
+      setNeRoleField("EMPLOYEE");
+    } finally {
+      setCreateUserLoading(false);
+    }
+  }
+
+  async function removeUser(id: string) {
+    const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setDbUsers((us) => us.filter((u) => u.id !== id));
+    }
+  }
 
   function shiftDeadline() {
     const [h, m] = stShift.split(":").map(Number);
@@ -211,7 +306,12 @@ export default function AttendancePortal() {
   });
 
   const tabs: [string, string][] = [["dash","Dashboard"],["emp","Employees"],["rep","Monthly report"],["not","Notice board"],["lea","Leave requests"],["set","Settings"]];
-  const navItems = tabs.map(([key, label]) => ({ key, label, active: key === tab, go: () => setTab(key) }));
+  const navItems = tabs.map(([key, label]) => ({
+    key,
+    label,
+    active: key === tab,
+    go: key === "emp" ? goToUsersTab : () => setTab(key),
+  }));
 
   const emps = employees.map((e) =>
     e.id === 0 ? { ...e, today: checkedIn ? (checkInLate ? "Late" : "On time") : "Absent", inTime: checkInAt || "—", lates: myLates } : e
@@ -239,16 +339,6 @@ export default function AttendancePortal() {
     };
   });
 
-  const qLower = q.toLowerCase();
-  const empRows = emps.filter((e) => !qLower || e.name.toLowerCase().includes(qLower) || e.dept.toLowerCase().includes(qLower)).map((e) => {
-    const p = pill(e.today);
-    return {
-      id: e.id, name: e.name, dept: e.dept, role: e.role, today: e.today, lates: e.lates,
-      lateColor: e.lates >= 3 ? "#b13a60" : e.lates >= 2 ? "#a8641a" : "#57506e",
-      pillBg: p.bg, pillColor: p.color, avBg: e.av, initials: initials(e.name),
-      remove: () => setEmployees((es) => es.filter((x) => x.id !== e.id)),
-    };
-  });
 
   const cutOf = (e: Employee) => Math.floor(e.lates / Number(stCut || 3));
   const reportRows = emps.map((e) => {
@@ -274,7 +364,7 @@ export default function AttendancePortal() {
     };
   });
 
-  const myLeaves = leaves.filter((l) => l.name === "Ahmed Raza").map((l) => {
+  const myLeaves = leaves.filter((l) => l.name === (session?.user?.name ?? "")).map((l) => {
     const p = pill(l.status);
     return { type: l.type, range: l.range, status: l.status, stBg: p.bg, stColor: p.color };
   });
@@ -295,17 +385,11 @@ export default function AttendancePortal() {
   }
   function submitLeave() {
     const range = (lvFrom || "TBD") + (lvTo && lvTo !== lvFrom ? " – " + lvTo : "");
-    setLeaves((ls) => [{ id: Date.now(), name: "Ahmed Raza", dept: "Engineering", type: lvType, range, reason: lvReason || "—", status: "Pending" }, ...ls]);
+    setLeaves((ls) => [{ id: Date.now(), name: session?.user?.name ?? "Employee", dept: session?.user?.department ?? "General", type: lvType, range, reason: lvReason || "—", status: "Pending" }, ...ls]);
     setLvSent(true);
     setLvFrom("");
     setLvTo("");
     setLvReason("");
-  }
-  function addEmp() {
-    setEmployees((es) => [{ id: Date.now(), name: neName || "New Employee", dept: neDept || "General", role: neRole || "Staff", today: "Absent", inTime: "—", lates: 0, absent: 0, leave: 0, present: 0, av: "linear-gradient(135deg,#2a8fdb,#7cc0f0)" }, ...es]);
-    setNeName("");
-    setNeDept("");
-    setNeRole("");
   }
   function sendNotice() {
     setNotices((ns) => [{ id: Date.now(), title: ntTitle || "Untitled notice", body: ntBody || "", priority: ntPriority, date: "Just now" }, ...ns]);
@@ -318,10 +402,18 @@ export default function AttendancePortal() {
     setTimeout(() => setSaved(false), 2500);
   }
   function logout() {
-    setView("login");
+    signOut({ redirect: false });
   }
 
-  if (view === "login") {
+  if (status === "loading") {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 16, color: "#6f6a85" }}>Loading…</div>
+      </div>
+    );
+  }
+
+  if (!session) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 40, boxSizing: "border-box" }}>
         <div style={{ ...glass, width: 440, padding: 44, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, animation: "fadeUp .5s ease" }}>
@@ -330,27 +422,45 @@ export default function AttendancePortal() {
           </div>
           <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 28, letterSpacing: "-0.5px" }}>Times Computers</div>
           <div style={{ color: "#6f6a85", fontSize: 15, marginBottom: 22 }}>Attendance &amp; Workforce Suite</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%" }}>
+          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <label style={{ fontSize: 13, fontWeight: 600, color: "#57506e" }}>Email</label>
-              <input defaultValue="you@aurorahr.com" readOnly style={inputStyle} />
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="you@timescomputers.com"
+                style={inputStyle}
+              />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <label style={{ fontSize: 13, fontWeight: 600, color: "#57506e" }}>Password</label>
-              <input type="password" defaultValue="password" readOnly style={inputStyle} />
+              <input
+                type="password"
+                required
+                autoComplete="current-password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="••••••••"
+                style={inputStyle}
+              />
             </div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", marginTop: 22 }}>
-            <button onClick={() => setView("admin")} style={primaryBtn}>Sign in as Admin</button>
-            <button onClick={() => setView("employee")} style={secondaryBtn}>Sign in as Employee</button>
-          </div>
-          <div style={{ fontSize: 12.5, color: "#a29dbb", marginTop: 16 }}>Demo prototype — no real credentials needed</div>
+            {loginError && (
+              <div style={{ padding: "11px 14px", borderRadius: 12, background: "rgba(226,85,123,0.10)", border: "1px solid rgba(226,85,123,0.25)", color: "#b13a60", fontSize: 13, fontWeight: 600 }}>{loginError}</div>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", marginTop: 10 }}>
+              <button type="submit" disabled={loginLoading} style={{ ...primaryBtn, opacity: loginLoading ? 0.7 : 1 }}>{loginLoading ? "Signing in…" : "Sign in"}</button>
+            </div>
+          </form>
+          <div style={{ fontSize: 12.5, color: "#a29dbb", marginTop: 16 }}>Contact your administrator if you don&apos;t have an account yet.</div>
         </div>
       </div>
     );
   }
 
-  if (view === "employee") {
+  if (session.user.role === "EMPLOYEE") {
     return (
       <div style={{ minHeight: "100vh", padding: "24px 32px 48px", boxSizing: "border-box", maxWidth: 1280, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.5)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.75)", borderRadius: 20, padding: "14px 22px", boxShadow: "0 8px 30px rgba(109,90,230,0.10)" }}>
@@ -367,8 +477,8 @@ export default function AttendancePortal() {
               {netChip.label}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#1fa97a,#7ad9b8)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 14 }}>AR</div>
-              <div style={{ fontSize: 14, fontWeight: 600 }}>Ahmed Raza</div>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#1fa97a,#7ad9b8)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 14 }}>{initials(session.user.name ?? "Employee")}</div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>{session.user.name}</div>
             </div>
             <button onClick={logout} style={{ padding: "8px 16px", border: "1px solid rgba(109,90,230,0.25)", borderRadius: 12, background: "rgba(255,255,255,0.55)", color: "#5a48c9", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Logout</button>
           </div>
@@ -574,32 +684,49 @@ export default function AttendancePortal() {
 
         {tab === "emp" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp .4s ease" }}>
-            <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Employees <span style={{ fontSize: 16, color: "#a29dbb", fontWeight: 600 }}>· {emps.length} total</span></div>
-            <div style={{ ...glass, borderRadius: 20, boxShadow: "0 12px 40px rgba(109,90,230,0.10)", padding: "16px 20px", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-              <input placeholder="Full name" value={neName} onChange={(e) => setNeName(e.target.value)} style={{ flex: 1.2, minWidth: 150, padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, outline: "none" }} />
-              <input placeholder="Department" value={neDept} onChange={(e) => setNeDept(e.target.value)} style={{ flex: 1, minWidth: 120, padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, outline: "none" }} />
-              <input placeholder="Role" value={neRole} onChange={(e) => setNeRole(e.target.value)} style={{ flex: 1, minWidth: 120, padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, outline: "none" }} />
-              <button onClick={addEmp} style={{ padding: "11px 22px", border: "none", borderRadius: 12, background: "linear-gradient(135deg,#6d5ae6,#8b74f0)", color: "#fff", fontSize: 13.5, fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 16px rgba(109,90,230,0.3)" }}>+ Add employee</button>
+            <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>User accounts <span style={{ fontSize: 16, color: "#a29dbb", fontWeight: 600 }}>· {dbUsers.length} total · stored in database</span></div>
+            <div style={{ ...glass, borderRadius: 20, boxShadow: "0 12px 40px rgba(109,90,230,0.10)", padding: "18px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <input placeholder="Full name" value={neName} onChange={(e) => setNeName(e.target.value)} style={{ flex: 1.2, minWidth: 150, padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, outline: "none" }} />
+                <input type="email" placeholder="Email" value={neEmail} onChange={(e) => setNeEmail(e.target.value)} style={{ flex: 1.2, minWidth: 170, padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, outline: "none" }} />
+                <input type="password" placeholder="Temporary password" value={nePassword} onChange={(e) => setNePassword(e.target.value)} style={{ flex: 1.2, minWidth: 170, padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, outline: "none" }} />
+              </div>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <input placeholder="Department" value={neDept} onChange={(e) => setNeDept(e.target.value)} style={{ flex: 1, minWidth: 120, padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, outline: "none" }} />
+                <input placeholder="Job title" value={neRole} onChange={(e) => setNeRole(e.target.value)} style={{ flex: 1, minWidth: 120, padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, outline: "none" }} />
+                <select value={neRoleField} onChange={(e) => setNeRoleField(e.target.value as "ADMIN" | "EMPLOYEE")} style={{ flex: 1, minWidth: 130, padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, outline: "none" }}>
+                  <option value="EMPLOYEE">Employee</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+                <button onClick={createUser} disabled={createUserLoading} style={{ padding: "11px 22px", border: "none", borderRadius: 12, background: "linear-gradient(135deg,#6d5ae6,#8b74f0)", color: "#fff", fontSize: 13.5, fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 16px rgba(109,90,230,0.3)", opacity: createUserLoading ? 0.7 : 1 }}>{createUserLoading ? "Creating…" : "+ Create user"}</button>
+              </div>
+              {createUserError && (
+                <div style={{ padding: "10px 14px", borderRadius: 12, background: "rgba(226,85,123,0.10)", border: "1px solid rgba(226,85,123,0.25)", color: "#b13a60", fontSize: 13, fontWeight: 600 }}>{createUserError}</div>
+              )}
+              <div style={{ fontSize: 12, color: "#a29dbb" }}>Passwords are hashed (bcrypt) before being stored — never kept in plain text.</div>
             </div>
             <div style={{ ...glass, padding: "22px 26px" }}>
-              <input placeholder="Search by name or department…" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: "100%", boxSizing: "border-box", padding: "12px 16px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 14, outline: "none", marginBottom: 14 }} />
-              <div style={{ display: "grid", gridTemplateColumns: "2fr 1.3fr 1.3fr 1fr 0.9fr 0.7fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
-                <div>NAME</div><div>DEPARTMENT</div><div>ROLE</div><div>TODAY</div><div>LATES</div><div></div>
+              <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1.3fr 1.1fr 0.8fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
+                <div>NAME</div><div>EMAIL</div><div>DEPARTMENT</div><div>ROLE</div><div></div>
               </div>
               <div style={{ maxHeight: 520, overflowY: "auto" }}>
-                {empRows.map((e) => (
-                  <div key={e.id} style={{ display: "grid", gridTemplateColumns: "2fr 1.3fr 1.3fr 1fr 0.9fr 0.7fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                      <div style={{ width: 30, height: 30, borderRadius: "50%", background: e.avBg, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 11, flexShrink: 0 }}>{e.initials}</div>
-                      <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.name}</div>
+                {usersLoading && <div style={{ padding: "16px 10px", color: "#a29dbb", fontSize: 13.5 }}>Loading users…</div>}
+                {!usersLoading && dbUsers.length === 0 && <div style={{ padding: "16px 10px", color: "#a29dbb", fontSize: 13.5 }}>No users yet — create the first one above.</div>}
+                {dbUsers.map((u) => {
+                  const p = u.role === "ADMIN" ? { bg: "rgba(109,90,230,0.12)", color: "#5a48c9" } : { bg: "rgba(31,169,122,0.14)", color: "#147a58" };
+                  return (
+                    <div key={u.id} style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1.3fr 1.1fr 0.8fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                        <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg,#6d5ae6,#a78bfa)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 11, flexShrink: 0 }}>{initials(u.name)}</div>
+                        <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</div>
+                      </div>
+                      <div style={{ color: "#57506e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.email}</div>
+                      <div style={{ color: "#57506e" }}>{u.department}</div>
+                      <div><span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: p.bg, color: p.color }}>{u.role}</span></div>
+                      <button onClick={() => removeUser(u.id)} disabled={u.id === session.user.id} style={{ padding: "6px 12px", border: "1px solid rgba(226,85,123,0.3)", borderRadius: 10, background: "transparent", color: "#b13a60", fontSize: 12, fontWeight: 700, cursor: u.id === session.user.id ? "not-allowed" : "pointer", opacity: u.id === session.user.id ? 0.4 : 1 }}>Remove</button>
                     </div>
-                    <div style={{ color: "#57506e" }}>{e.dept}</div>
-                    <div style={{ color: "#57506e" }}>{e.role}</div>
-                    <div><span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: e.pillBg, color: e.pillColor }}>{e.today}</span></div>
-                    <div style={{ fontWeight: 700, color: e.lateColor }}>{e.lates}</div>
-                    <button onClick={e.remove} style={{ padding: "6px 12px", border: "1px solid rgba(226,85,123,0.3)", borderRadius: 10, background: "transparent", color: "#b13a60", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Remove</button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

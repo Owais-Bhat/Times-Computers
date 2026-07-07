@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# sqlite
+/prisma/*.db
+/prisma/*.db-journal
+
+# stray design asset
+/ChatGPT Image*.png

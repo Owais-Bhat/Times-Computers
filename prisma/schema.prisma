@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+enum AttendanceStatus {
+  ON_TIME
+  LATE
+  ABSENT
+  LEAVE
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(EMPLOYEE)
+  department   String   @default("General")
+  jobTitle     String   @default("Staff")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  attendances Attendance[]
+  leaves      Leave[]
+  notices     Notice[]
+}
+
+model Attendance {
+  id        String            @id @default(cuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime          @default(now())
+  checkInAt DateTime?
+  checkOutAt DateTime?
+  status    AttendanceStatus  @default(ABSENT)
+  createdAt DateTime          @default(now())
+
+  @@unique([userId, date])
+}
+
+model Leave {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  fromDate  String
+  toDate    String
+  reason    String
+  status    LeaveStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+}
+
+model Notice {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  priority  String   @default("Normal")
+  createdAt DateTime @default(now())
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
