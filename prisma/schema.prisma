@@ -13,7 +13,7 @@ enum Role {
 }
 
 enum AttendanceStatus {
-  ON_TIME
+  PRESENT
   LATE
   ABSENT
   LEAVE
@@ -31,27 +31,50 @@ model User {
   email        String   @unique
   passwordHash String
   role         Role     @default(EMPLOYEE)
+  employeeCode String?  @unique
   department   String   @default("General")
   jobTitle     String   @default("Staff")
+  branch       String   @default("Main Campus")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  attendances Attendance[]
-  leaves      Leave[]
-  notices     Notice[]
+  attendances       Attendance[] @relation("FacultyAttendance")
+  approvedAttendance Attendance[] @relation("ApprovedAttendance")
+  leaves            Leave[]
+  notices           Notice[]
 }
 
 model Attendance {
-  id        String            @id @default(cuid())
-  userId    String
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date      DateTime          @default(now())
-  checkInAt DateTime?
-  checkOutAt DateTime?
-  status    AttendanceStatus  @default(ABSENT)
-  createdAt DateTime          @default(now())
+  id                String           @id @default(cuid())
+  userId            String
+  user              User             @relation("FacultyAttendance", fields: [userId], references: [id], onDelete: Cascade)
+  date              DateTime         @default(now())
+  checkInAt         DateTime?
+  checkOutAt        DateTime?
+  status            AttendanceStatus @default(ABSENT)
+  lateMinutes       Int              @default(0)
+  totalWorkingHours Float?
+  breakMinutes      Int?
+  branch            String?
+  remarks           String?
+  batchAssigned     String?
+  classesTaken      Int?
+  studentsPresent   Int?
+  studentsAbsent    Int?
+  selfMarked        Boolean          @default(true)
+  approvedById      String?
+  approvedBy        User?            @relation("ApprovedAttendance", fields: [approvedById], references: [id])
+  createdAt         DateTime         @default(now())
 
   @@unique([userId, date])
+}
+
+model Settings {
+  id            Int    @id @default(1)
+  officeIP      String @default("192.168.10.1")
+  shiftStart    String @default("09:00")
+  graceMinutes  Int    @default(5)
+  latesPerCut   Int    @default(3)
 }
 
 model Leave {

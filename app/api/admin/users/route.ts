@@ -17,6 +17,8 @@ const createUserSchema = z.object({
   role: z.enum(["ADMIN", "EMPLOYEE"]).default("EMPLOYEE"),
   department: z.string().trim().min(1).max(100).default("General"),
   jobTitle: z.string().trim().min(1).max(100).default("Staff"),
+  branch: z.string().trim().min(1).max(100).default("Main Campus"),
+  employeeCode: z.string().trim().max(50).optional(),
 });
 
 export async function GET() {
@@ -34,6 +36,8 @@ export async function GET() {
       role: true,
       department: true,
       jobTitle: true,
+      branch: true,
+      employeeCode: true,
       createdAt: true,
     },
   });
@@ -53,7 +57,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
   }
 
-  const { name, email, password, role, department, jobTitle } = parsed.data;
+  const { name, email, password, role, department, jobTitle, branch, employeeCode } = parsed.data;
   const normalizedEmail = email.toLowerCase();
 
   const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
@@ -64,8 +68,8 @@ export async function POST(req: Request) {
   const passwordHash = await bcrypt.hash(password, 12);
 
   const user = await prisma.user.create({
-    data: { name, email: normalizedEmail, passwordHash, role, department, jobTitle },
-    select: { id: true, name: true, email: true, role: true, department: true, jobTitle: true, createdAt: true },
+    data: { name, email: normalizedEmail, passwordHash, role, department, jobTitle, branch, employeeCode: employeeCode || null },
+    select: { id: true, name: true, email: true, role: true, department: true, jobTitle: true, branch: true, employeeCode: true, createdAt: true },
   });
 
   return NextResponse.json({ user }, { status: 201 });
