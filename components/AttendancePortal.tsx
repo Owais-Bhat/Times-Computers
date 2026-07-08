@@ -168,18 +168,9 @@ export default function AttendancePortal() {
 
   const [now, setNow] = useState(new Date());
 
-  // Notices / leave requests (kept as lightweight in-memory demo data — not part of the DB schema)
-  const [notices, setNotices] = useState<Notice[]>([
-    { id: 1, title: "Eid holidays announced", body: "Office will remain closed from July 27 to July 29. Attendance resumes July 30, 9:00 AM sharp.", priority: "Important", date: "Jul 2, 2026 · 10:15 AM" },
-    { id: 2, title: "New attendance policy", body: "Check-in after the grace period is marked late. Repeated lates in a month will deduct salary.", priority: "Urgent", date: "Jul 1, 2026 · 9:00 AM" },
-    { id: 3, title: "Monthly town hall", body: "All-hands meeting this Friday at 4:00 PM in the main hall. Attendance is mandatory.", priority: "Normal", date: "Jun 30, 2026 · 3:30 PM" },
-  ]);
-  const [leaves, setLeaves] = useState<Leave[]>([
-    { id: 1, name: "Bilal Khan", dept: "Sales", type: "Sick leave", range: "Jul 6 – Jul 7", reason: "Fever, doctor advised rest", status: "Pending" },
-    { id: 2, name: "Hira Qureshi", dept: "Design", type: "Casual leave", range: "Jul 10", reason: "Family function", status: "Pending" },
-    { id: 3, name: "Usman Tariq", dept: "Engineering", type: "Annual leave", range: "Jul 14 – Jul 18", reason: "Planned vacation", status: "Approved" },
-    { id: 4, name: "Sana Mirza", dept: "Finance", type: "Half day", range: "Jul 3", reason: "Bank work", status: "Rejected" },
-  ]);
+  // Notices / leave requests (kept as lightweight in-memory state — not part of the DB schema)
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [leaves, setLeaves] = useState<Leave[]>([]);
   const [lvType, setLvType] = useState("Casual leave");
   const [lvFrom, setLvFrom] = useState("");
   const [lvTo, setLvTo] = useState("");
