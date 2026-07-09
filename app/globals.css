@@ -3,6 +3,8 @@
 html, body {
   margin: 0;
   padding: 0;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 body {
@@ -138,5 +140,18 @@ button {
   .rp-tbl-8 {
     grid-template-columns: 140px 100px 70px 60px 70px 70px 70px 90px !important;
     min-width: 660px;
+  }
+  .rp-page-title {
+    font-size: 21px !important;
+  }
+  .rp-clock {
+    font-size: 38px !important;
+  }
+  .rp-stat-value {
+    font-size: 28px !important;
+  }
+  .rp-topbar-right {
+    flex-wrap: wrap;
+    justify-content: center !important;
   }
 }

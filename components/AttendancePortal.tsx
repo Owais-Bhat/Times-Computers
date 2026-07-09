@@ -570,7 +570,7 @@ export default function AttendancePortal() {
             <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 18 }}>Times Computers</div>
             <div style={{ fontSize: 12, fontWeight: 700, color: "#5a48c9", background: "rgba(109,90,230,0.12)", padding: "4px 12px", borderRadius: 999, letterSpacing: "0.4px" }}>FACULTY</div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div className="rp-topbar-right" style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, padding: "6px 14px", borderRadius: 999, background: netChip.bg, color: netChip.color }}>
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: "currentColor", animation: "pulseDot 2s infinite" }}></div>
               {netChip.label}
@@ -587,7 +587,7 @@ export default function AttendancePortal() {
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
             <div style={{ ...glass, padding: 30, display: "flex", flexDirection: "column", gap: 6, animation: "fadeUp .4s ease" }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: "#6f6a85" }}>{todayDate}</div>
-              <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 52, letterSpacing: "-1.5px", lineHeight: 1.1 }}>{clock}</div>
+              <div className="rp-clock" style={{ fontFamily: sora, fontWeight: 800, fontSize: 52, letterSpacing: "-1.5px", lineHeight: 1.1 }}>{clock}</div>
               <div style={{ fontSize: 13.5, color: "#6f6a85", marginTop: 2 }}>Shift {fmtShift()} · Grace {stGrace} min · Check-in after {fmtLateAfter()} counts as late</div>
 
               {!onOfficeNetwork && (
@@ -758,7 +758,7 @@ export default function AttendancePortal() {
           <div style={{ display: "flex", flexDirection: "column", gap: 22, animation: "fadeUp .4s ease" }}>
             <div className="rp-header-row" style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
               <div>
-                <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Today&apos;s attendance</div>
+                <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Today&apos;s attendance</div>
                 <div style={{ fontSize: 14, color: "#6f6a85", marginTop: 4 }}>{todayDate} · Office IP {stIP} · Shift {fmtShift()}</div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -770,7 +770,7 @@ export default function AttendancePortal() {
               {statCards.map((s, i) => (
                 <div key={i} style={{ ...glass, borderRadius: 22, boxShadow: "0 12px 40px rgba(109,90,230,0.10)", padding: "22px 24px" }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: s.color, letterSpacing: "0.4px" }}>{s.label}</div>
-                  <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 38, letterSpacing: "-1px", marginTop: 6 }}>{s.value}</div>
+                  <div className="rp-stat-value" style={{ fontFamily: sora, fontWeight: 800, fontSize: 38, letterSpacing: "-1px", marginTop: 6 }}>{s.value}</div>
                   <div style={{ fontSize: 12.5, color: "#a29dbb", marginTop: 2 }}>{s.sub}</div>
                 </div>
               ))}
@@ -818,7 +818,7 @@ export default function AttendancePortal() {
 
         {tab === "emp" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp .4s ease" }}>
-            <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Faculty accounts <span style={{ fontSize: 16, color: "#a29dbb", fontWeight: 600 }}>· {dbUsers.length} total · stored in database</span></div>
+            <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Faculty accounts <span style={{ fontSize: 16, color: "#a29dbb", fontWeight: 600 }}>· {dbUsers.length} total · stored in database</span></div>
             <div style={{ ...glass, borderRadius: 20, boxShadow: "0 12px 40px rgba(109,90,230,0.10)", padding: "18px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                 <input placeholder="Full name" value={neName} onChange={(e) => setNeName(e.target.value)} style={{ flex: 1.2, minWidth: 150, padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, outline: "none" }} />
@@ -875,21 +875,21 @@ export default function AttendancePortal() {
         {tab === "rep" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp .4s ease" }}>
             <div className="rp-header-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Monthly report</div>
+              <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Monthly report</div>
               <button style={{ padding: "11px 20px", border: "1px solid rgba(109,90,230,0.25)", borderRadius: 12, background: "rgba(255,255,255,0.6)", color: "#5a48c9", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>Export CSV</button>
             </div>
             <div className="rp-stats-3" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
               <div style={{ ...glass, borderRadius: 20, padding: "20px 24px", boxShadow: "0 12px 40px rgba(109,90,230,0.10)" }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#147a58" }}>FACULTY TRACKED</div>
-                <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 32, marginTop: 4 }}>{reportRows.length}</div>
+                <div className="rp-stat-value" style={{ fontFamily: sora, fontWeight: 800, fontSize: 32, marginTop: 4 }}>{reportRows.length}</div>
               </div>
               <div style={{ ...glass, borderRadius: 20, padding: "20px 24px", boxShadow: "0 12px 40px rgba(109,90,230,0.10)" }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#a8641a" }}>TOTAL LATES</div>
-                <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 32, marginTop: 4 }}>{totalLates}</div>
+                <div className="rp-stat-value" style={{ fontFamily: sora, fontWeight: 800, fontSize: 32, marginTop: 4 }}>{totalLates}</div>
               </div>
               <div style={{ ...glass, borderRadius: 20, padding: "20px 24px", boxShadow: "0 12px 40px rgba(109,90,230,0.10)" }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#b13a60" }}>SALARY-CUT DAYS</div>
-                <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 32, marginTop: 4 }}>{totalCuts}</div>
+                <div className="rp-stat-value" style={{ fontFamily: sora, fontWeight: 800, fontSize: 32, marginTop: 4 }}>{totalCuts}</div>
               </div>
             </div>
             <div style={{ ...glass, padding: "18px 22px", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -946,7 +946,7 @@ export default function AttendancePortal() {
 
         {tab === "not" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp .4s ease" }}>
-            <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Notice board</div>
+            <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Notice board</div>
             <div className="rp-two-col" style={{ display: "grid", gridTemplateColumns: "0.9fr 1.1fr", gap: 22, alignItems: "start" }}>
               <div style={{ ...glass, padding: "26px 28px", display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17 }}>Send a notice</div>
@@ -982,7 +982,7 @@ export default function AttendancePortal() {
 
         {tab === "lea" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp .4s ease" }}>
-            <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Leave requests <span style={{ fontSize: 16, color: "#a29dbb", fontWeight: 600 }}>· {leaves.filter((l) => l.status === "Pending").length} pending</span></div>
+            <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Leave requests <span style={{ fontSize: 16, color: "#a29dbb", fontWeight: 600 }}>· {leaves.filter((l) => l.status === "Pending").length} pending</span></div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {leaveRows.map((l) => (
                 <div key={l.id} style={{ ...glass, borderRadius: 20, boxShadow: "0 10px 32px rgba(109,90,230,0.10)", padding: "20px 24px", display: "flex", alignItems: "center", gap: 18 }}>
@@ -1008,7 +1008,7 @@ export default function AttendancePortal() {
 
         {tab === "set" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp .4s ease", maxWidth: 640 }}>
-            <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Attendance settings</div>
+            <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Attendance settings</div>
             <div style={{ ...glass, padding: "28px 30px", display: "flex", flexDirection: "column", gap: 18 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label style={{ fontSize: 13, fontWeight: 700, color: "#57506e" }}>Office IP address (attendance allowed only from this IP)</label>
