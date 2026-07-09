@@ -640,7 +640,7 @@ export default function AttendancePortal() {
               )}
             </div>
 
-            <div style={{ ...glass, padding: "26px 30px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20 }}>
+            <div className="rp-late-card" style={{ ...glass, padding: "26px 30px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17 }}>Late arrivals (last 14 days)</div>
                 <div style={{ fontSize: 13.5, color: "#6f6a85", lineHeight: 1.5 }}>
@@ -999,14 +999,14 @@ export default function AttendancePortal() {
             <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Leave requests <span style={{ fontSize: 16, color: "#a29dbb", fontWeight: 600 }}>· {leaves.filter((l) => l.status === "Pending").length} pending</span></div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {leaveRows.map((l) => (
-                <div key={l.id} style={{ ...glass, borderRadius: 20, boxShadow: "0 10px 32px rgba(109,90,230,0.10)", padding: "20px 24px", display: "flex", alignItems: "center", gap: 18 }}>
+                <div key={l.id} className="rp-leave-card" style={{ ...glass, borderRadius: 20, boxShadow: "0 10px 32px rgba(109,90,230,0.10)", padding: "20px 24px", display: "flex", alignItems: "center", gap: 18 }}>
                   <div style={{ width: 40, height: 40, borderRadius: "50%", background: l.avBg, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 13.5, flexShrink: 0 }}>{l.initials}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 15 }}>{l.name} <span style={{ fontWeight: 600, color: "#6f6a85", fontSize: 13.5 }}>· {l.type}</span></div>
                     <div style={{ fontSize: 13, color: "#6f6a85", marginTop: 3 }}>{l.range} — &quot;{l.reason}&quot;</div>
                   </div>
                   {l.pending && (
-                    <div style={{ display: "flex", gap: 10 }}>
+                    <div className="rp-leave-actions" style={{ display: "flex", gap: 10 }}>
                       <button onClick={l.approve} style={{ padding: "10px 20px", border: "none", borderRadius: 12, background: "linear-gradient(135deg,#1fa97a,#3cc492)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 16px rgba(31,169,122,0.3)" }}>Approve</button>
                       <button onClick={l.reject} style={{ padding: "10px 20px", border: "1px solid rgba(226,85,123,0.35)", borderRadius: 12, background: "rgba(255,255,255,0.6)", color: "#b13a60", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Reject</button>
                     </div>
