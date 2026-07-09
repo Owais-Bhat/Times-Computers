@@ -38,7 +38,7 @@ export async function POST(req: Request) {
   const clientIP = getClientIP(req);
   if (clientIP !== settings.officeIP) {
     return NextResponse.json(
-      { error: "You must be connected to the office network to check out" },
+      { error: `You must be connected to the office network to check out (detected IP: ${clientIP ?? "unknown"}, expected: ${settings.officeIP})` },
       { status: 403 }
     );
   }
