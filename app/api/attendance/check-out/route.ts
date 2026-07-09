@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { startOfDay } from "@/lib/settings";
+import { getSettings, startOfDay, getClientIP } from "@/lib/settings";
 
 const bodySchema = z.object({
   batchAssigned: z.string().trim().max(100).optional(),
@@ -32,6 +32,15 @@ export async function POST(req: Request) {
   }
   if (existing.checkOutAt) {
     return NextResponse.json({ error: "Already checked out today" }, { status: 409 });
+  }
+
+  const settings = await getSettings();
+  const clientIP = getClientIP(req);
+  if (clientIP !== settings.officeIP) {
+    return NextResponse.json(
+      { error: "You must be connected to the office network to check out" },
+      { status: 403 }
+    );
   }
 
   const now = new Date();

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getSettings, computeLateMinutes, startOfDay } from "@/lib/settings";
+import { getSettings, computeLateMinutes, startOfDay, getClientIP } from "@/lib/settings";
 
-export async function POST() {
+export async function POST(req: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -16,6 +16,14 @@ export async function POST() {
   }
 
   const settings = await getSettings();
+  const clientIP = getClientIP(req);
+  if (clientIP !== settings.officeIP) {
+    return NextResponse.json(
+      { error: "You must be connected to the office network to check in" },
+      { status: 403 }
+    );
+  }
+
   const now = new Date();
   const lateMinutes = computeLateMinutes(now, settings.shiftStart, settings.graceMinutes);
   const status = lateMinutes > 0 ? "LATE" : "PRESENT";
