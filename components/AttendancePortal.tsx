@@ -572,8 +572,8 @@ export default function AttendancePortal() {
             <div style={{ fontSize: 12, fontWeight: 700, color: "#5a48c9", background: "rgba(109,90,230,0.12)", padding: "4px 12px", borderRadius: 999, letterSpacing: "0.4px" }}>FACULTY</div>
           </div>
           <div className="rp-topbar-right" style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, padding: "6px 14px", borderRadius: 999, background: netChip.bg, color: netChip.color }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "currentColor", animation: "pulseDot 2s infinite" }}></div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, padding: "6px 14px", borderRadius: 999, background: netChip.bg, color: netChip.color, maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word" }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "currentColor", animation: "pulseDot 2s infinite", flexShrink: 0 }}></div>
               {netChip.label}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -592,13 +592,13 @@ export default function AttendancePortal() {
               <div style={{ fontSize: 13.5, color: "#6f6a85", marginTop: 2 }}>Shift {fmtShift()} · Grace {stGrace} min · Check-in after {fmtLateAfter()} counts as late</div>
 
               {!onOfficeNetwork && (
-                <div style={{ marginTop: 18, padding: "16px 18px", borderRadius: 16, background: "rgba(226,85,123,0.10)", border: "1px solid rgba(226,85,123,0.25)", color: "#b13a60", fontSize: 14, fontWeight: 600, lineHeight: 1.5 }}>
+                <div style={{ marginTop: 18, padding: "16px 18px", borderRadius: 16, background: "rgba(226,85,123,0.10)", border: "1px solid rgba(226,85,123,0.25)", color: "#b13a60", fontSize: 14, fontWeight: 600, lineHeight: 1.5, overflowWrap: "break-word", wordBreak: "break-word" }}>
                   Check-in blocked — you are not connected to the office network ({stIP}). Attendance can only be marked from the office computer/IP.
                 </div>
               )}
 
               {checkInError && (
-                <div style={{ marginTop: 12, padding: "12px 16px", borderRadius: 14, background: "rgba(226,85,123,0.10)", border: "1px solid rgba(226,85,123,0.25)", color: "#b13a60", fontSize: 13, fontWeight: 600 }}>{checkInError}</div>
+                <div style={{ marginTop: 12, padding: "12px 16px", borderRadius: 14, background: "rgba(226,85,123,0.10)", border: "1px solid rgba(226,85,123,0.25)", color: "#b13a60", fontSize: 13, fontWeight: 600, overflowWrap: "break-word", wordBreak: "break-word" }}>{checkInError}</div>
               )}
 
               {onOfficeNetwork && !checkedIn && (
@@ -627,7 +627,7 @@ export default function AttendancePortal() {
                     <input type="number" min={0} placeholder="Break (minutes)" value={coBreak} onChange={(e) => setCoBreak(e.target.value)} style={smallInput} />
                   </div>
                   <textarea placeholder="Remarks (optional)" value={coRemarks} onChange={(e) => setCoRemarks(e.target.value)} rows={2} style={{ ...smallInput, resize: "vertical" }} />
-                  {checkOutError && <div style={{ color: "#b13a60", fontSize: 12.5, fontWeight: 600 }}>{checkOutError}</div>}
+                  {checkOutError && <div style={{ color: "#b13a60", fontSize: 12.5, fontWeight: 600, overflowWrap: "break-word", wordBreak: "break-word" }}>{checkOutError}</div>}
                   <div style={{ display: "flex", gap: 10 }}>
                     <button onClick={submitCheckout} style={{ padding: "11px 20px", border: "none", borderRadius: 12, background: "linear-gradient(135deg,#e2557b,#c94069)", color: "#fff", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>Submit &amp; check out</button>
                     <button onClick={() => setShowCheckoutForm(false)} style={{ padding: "11px 20px", border: "1px solid rgba(109,90,230,0.2)", borderRadius: 12, background: "transparent", color: "#57506e", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>Cancel</button>
@@ -1025,8 +1025,8 @@ export default function AttendancePortal() {
             <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Attendance settings</div>
             <div style={{ ...glass, padding: "28px 30px", display: "flex", flexDirection: "column", gap: 18 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <label style={{ fontSize: 13, fontWeight: 700, color: "#57506e" }}>Office IP address (attendance allowed only from this IP)</label>
-                <input value={stIP} onChange={(e) => setStIP(e.target.value)} style={{ padding: "13px 16px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 14.5, outline: "none", fontWeight: 600 }} />
+                <label style={{ fontSize: 13, fontWeight: 700, color: "#57506e" }}>Office IP address(es) — comma-separated (the same WiFi can show up as an IPv4 or IPv6 address depending on the device, so add both if a check-in gets rejected)</label>
+                <input value={stIP} onChange={(e) => setStIP(e.target.value)} placeholder="e.g. 49.36.202.50, 2405:201:5502:c32c::/64" style={{ padding: "13px 16px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 14.5, outline: "none", fontWeight: 600, wordBreak: "break-word" }} />
               </div>
               <div className="rp-stats-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>

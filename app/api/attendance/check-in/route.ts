@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getSettings, computeLateMinutes, startOfDay, getClientIP } from "@/lib/settings";
+import { getSettings, computeLateMinutes, startOfDay, getClientIP, isOnOfficeNetwork } from "@/lib/settings";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
   const settings = await getSettings();
   const clientIP = getClientIP(req);
-  if (clientIP !== settings.officeIP) {
+  if (!isOnOfficeNetwork(clientIP, settings.officeIP)) {
     return NextResponse.json(
       { error: `You must be connected to the office network to check in (detected IP: ${clientIP ?? "unknown"}, expected: ${settings.officeIP})` },
       { status: 403 }

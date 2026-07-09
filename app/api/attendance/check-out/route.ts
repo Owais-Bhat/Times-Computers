@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getSettings, startOfDay, getClientIP } from "@/lib/settings";
+import { getSettings, startOfDay, getClientIP, isOnOfficeNetwork } from "@/lib/settings";
 
 const bodySchema = z.object({
   batchAssigned: z.string().trim().max(100).optional(),
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
   const settings = await getSettings();
   const clientIP = getClientIP(req);
-  if (clientIP !== settings.officeIP) {
+  if (!isOnOfficeNetwork(clientIP, settings.officeIP)) {
     return NextResponse.json(
       { error: `You must be connected to the office network to check out (detected IP: ${clientIP ?? "unknown"}, expected: ${settings.officeIP})` },
       { status: 403 }
