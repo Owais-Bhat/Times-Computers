@@ -119,6 +119,7 @@ function isToday(iso: string) {
 export default function AttendancePortal() {
   const { data: session, status } = useSession();
   const [tab, setTab] = useState("dash");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Real login form state
   const [loginIdentifier, setLoginIdentifier] = useState("");
@@ -731,7 +732,19 @@ export default function AttendancePortal() {
   // Admin
   return (
     <div className="rp-admin-shell" style={{ minHeight: "100vh", display: "flex", gap: 24, padding: 24, boxSizing: "border-box", maxWidth: 1440, margin: "0 auto" }}>
-      <div className="rp-sidebar" style={{ width: 236, flexShrink: 0, background: "rgba(255,255,255,0.5)", backdropFilter: "blur(26px)", WebkitBackdropFilter: "blur(26px)", border: "1px solid rgba(255,255,255,0.78)", borderRadius: 24, boxShadow: "0 12px 40px rgba(109,90,230,0.12)", padding: "24px 16px", display: "flex", flexDirection: "column", gap: 6, position: "sticky", top: 24, height: "calc(100vh - 48px)", boxSizing: "border-box" }}>
+      <div className="rp-mobile-topbar">
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 10, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#04101f", flexShrink: 0 }}>
+            <Image src="/times-computers-logo.png" alt="Times Computers" width={32} height={32} style={{ objectFit: "cover", width: "100%", height: "100%" }} />
+          </div>
+          <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 15 }}>Times Computers</div>
+        </div>
+        <button aria-label="Open menu" onClick={() => setMobileNavOpen(true)} className="rp-hamburger-btn">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      {mobileNavOpen && <div className="rp-sidebar-overlay" onClick={() => setMobileNavOpen(false)}></div>}
+      <div className={mobileNavOpen ? "rp-sidebar rp-sidebar-open" : "rp-sidebar"} style={{ width: 236, flexShrink: 0, background: "rgba(255,255,255,0.5)", backdropFilter: "blur(26px)", WebkitBackdropFilter: "blur(26px)", border: "1px solid rgba(255,255,255,0.78)", borderRadius: 24, boxShadow: "0 12px 40px rgba(109,90,230,0.12)", padding: "24px 16px", display: "flex", flexDirection: "column", gap: 6, position: "sticky", top: 24, height: "calc(100vh - 48px)", boxSizing: "border-box" }}>
         <div className="rp-sidebar-header" style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 10px 18px", borderBottom: "1px solid rgba(109,90,230,0.1)", marginBottom: 12 }}>
           <div style={{ width: 38, height: 38, borderRadius: 12, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#04101f", flexShrink: 0 }}>
             <Image src="/times-computers-logo.png" alt="Times Computers" width={38} height={38} style={{ objectFit: "cover", width: "100%", height: "100%" }} />
@@ -740,10 +753,11 @@ export default function AttendancePortal() {
             <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 16, lineHeight: 1.1 }}>Times Computers</div>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#5a48c9", letterSpacing: "0.5px" }}>ADMIN PANEL</div>
           </div>
+          <button aria-label="Close menu" onClick={() => setMobileNavOpen(false)} className="rp-sidebar-close">✕</button>
         </div>
         <div className="rp-sidebar-nav">
         {navItems.map((nv) => (
-          <button key={nv.key} onClick={nv.go} className="rp-nav-btn" style={nv.active
+          <button key={nv.key} onClick={() => { nv.go(); setMobileNavOpen(false); }} className="rp-nav-btn" style={nv.active
             ? { textAlign: "left", padding: "12px 16px", border: "none", borderRadius: 14, background: "linear-gradient(135deg,#6d5ae6,#8b74f0)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 16px rgba(109,90,230,0.3)" }
             : { textAlign: "left", padding: "12px 16px", border: "none", borderRadius: 14, background: "transparent", color: "#57506e", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>{nv.label}</button>
         ))}
