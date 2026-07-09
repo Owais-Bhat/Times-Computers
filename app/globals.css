@@ -44,3 +44,99 @@ button {
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: rgba(109,90,230,0.25); border-radius: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- Responsive layout (mobile-first overrides) ---------- */
+
+.rp-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 900px) {
+  .rp-two-col {
+    grid-template-columns: 1fr !important;
+  }
+  .rp-stats-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .rp-stats-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .rp-admin-shell {
+    flex-direction: column !important;
+    padding: 16px !important;
+    gap: 16px !important;
+  }
+  .rp-sidebar {
+    width: 100% !important;
+    position: static !important;
+    height: auto !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: wrap;
+    padding: 12px !important;
+    gap: 8px !important;
+  }
+  .rp-sidebar-header {
+    border-bottom: none !important;
+    padding: 0 8px 0 0 !important;
+    margin-bottom: 0 !important;
+  }
+  .rp-sidebar-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1;
+  }
+  .rp-nav-btn {
+    padding: 8px 12px !important;
+    white-space: nowrap;
+  }
+  .rp-sidebar-spacer {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .rp-page {
+    padding: 14px 12px 32px !important;
+  }
+  .rp-center-pad {
+    padding: 16px !important;
+  }
+  .rp-login-card {
+    width: 100% !important;
+    padding: 28px 22px !important;
+  }
+  .rp-topbar {
+    flex-wrap: wrap;
+    gap: 12px !important;
+    justify-content: center !important;
+  }
+  .rp-header-row {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+  .rp-form-2 {
+    grid-template-columns: 1fr !important;
+  }
+  .rp-stats-4 {
+    grid-template-columns: 1fr !important;
+  }
+  .rp-stats-3 {
+    grid-template-columns: 1fr !important;
+  }
+  .rp-tbl-5 {
+    grid-template-columns: 100px 80px 80px 60px 70px !important;
+    min-width: 480px;
+  }
+  .rp-tbl-7 {
+    grid-template-columns: 140px 180px 100px 110px 110px 80px 70px !important;
+    min-width: 780px;
+  }
+  .rp-tbl-8 {
+    grid-template-columns: 140px 100px 70px 60px 70px 70px 70px 90px !important;
+    min-width: 660px;
+  }
+}

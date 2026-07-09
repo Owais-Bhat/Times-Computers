@@ -530,8 +530,8 @@ export default function AttendancePortal() {
 
   if (!session) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 40, boxSizing: "border-box" }}>
-        <div style={{ ...glass, width: 440, padding: 44, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, animation: "fadeUp .5s ease" }}>
+      <div className="rp-center-pad" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 40, boxSizing: "border-box" }}>
+        <div className="rp-login-card" style={{ ...glass, width: 440, padding: 44, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, animation: "fadeUp .5s ease" }}>
           <div style={{ width: 84, height: 84, borderRadius: 20, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8, background: "#04101f" }}>
             <Image src="/times-computers-logo.png" alt="Times Computers" width={84} height={84} style={{ objectFit: "cover", width: "100%", height: "100%" }} />
           </div>
@@ -561,8 +561,8 @@ export default function AttendancePortal() {
 
   if (session.user.role === "EMPLOYEE") {
     return (
-      <div style={{ minHeight: "100vh", padding: "24px 32px 48px", boxSizing: "border-box", maxWidth: 1280, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.5)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.75)", borderRadius: 20, padding: "14px 22px", boxShadow: "0 8px 30px rgba(109,90,230,0.10)" }}>
+      <div className="rp-page" style={{ minHeight: "100vh", padding: "24px 32px 48px", boxSizing: "border-box", maxWidth: 1280, margin: "0 auto" }}>
+        <div className="rp-topbar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.5)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.75)", borderRadius: 20, padding: "14px 22px", boxShadow: "0 8px 30px rgba(109,90,230,0.10)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 38, height: 38, borderRadius: 12, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#04101f" }}>
               <Image src="/times-computers-logo.png" alt="Times Computers" width={38} height={38} style={{ objectFit: "cover", width: "100%", height: "100%" }} />
@@ -583,7 +583,7 @@ export default function AttendancePortal() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 22, marginTop: 22, alignItems: "start" }}>
+        <div className="rp-two-col" style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 22, marginTop: 22, alignItems: "start" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
             <div style={{ ...glass, padding: 30, display: "flex", flexDirection: "column", gap: 6, animation: "fadeUp .4s ease" }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: "#6f6a85" }}>{todayDate}</div>
@@ -618,7 +618,7 @@ export default function AttendancePortal() {
               {showCheckoutForm && (
                 <div style={{ marginTop: 14, padding: 18, borderRadius: 16, background: "rgba(109,90,230,0.06)", border: "1px solid rgba(109,90,230,0.15)", display: "flex", flexDirection: "column", gap: 10 }}>
                   <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 14.5 }}>End-of-day summary</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div className="rp-form-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                     <input placeholder="Batch assigned" value={coBatch} onChange={(e) => setCoBatch(e.target.value)} style={smallInput} />
                     <input type="number" min={0} placeholder="Classes taken" value={coClasses} onChange={(e) => setCoClasses(e.target.value)} style={smallInput} />
                     <input type="number" min={0} placeholder="Students present" value={coStudentsPresent} onChange={(e) => setCoStudentsPresent(e.target.value)} style={smallInput} />
@@ -656,12 +656,13 @@ export default function AttendancePortal() {
 
             <div style={{ ...glass, padding: "26px 30px" }}>
               <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17, marginBottom: 16 }}>My attendance — last 14 days</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1.4fr 0.9fr 0.9fr 0.7fr 1fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
+              <div className="rp-table-scroll">
+              <div className="rp-tbl-5" style={{ display: "grid", gridTemplateColumns: "1.4fr 0.9fr 0.9fr 0.7fr 1fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
                 <div>DATE</div><div>CHECK IN</div><div>CHECK OUT</div><div>HOURS</div><div>STATUS</div>
               </div>
               {myDays.length === 0 && <div style={{ padding: "16px 10px", color: "#a29dbb", fontSize: 13.5 }}>No attendance recorded yet.</div>}
               {myDays.map((dd, i) => (
-                <div key={i} style={{ display: "grid", gridTemplateColumns: "1.4fr 0.9fr 0.9fr 0.7fr 1fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5 }}>
+                <div key={i} className="rp-tbl-5" style={{ display: "grid", gridTemplateColumns: "1.4fr 0.9fr 0.9fr 0.7fr 1fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5 }}>
                   <div style={{ fontWeight: 600 }}>{dd.date}</div>
                   <div style={{ color: "#57506e" }}>{dd.in}</div>
                   <div style={{ color: "#57506e" }}>{dd.out}</div>
@@ -669,6 +670,7 @@ export default function AttendancePortal() {
                   <div><span style={{ fontSize: 11.5, fontWeight: 700, padding: "4px 11px", borderRadius: 999, background: dd.pillBg, color: dd.pillColor }}>{dd.status}</span></div>
                 </div>
               ))}
+              </div>
             </div>
           </div>
 
@@ -698,7 +700,7 @@ export default function AttendancePortal() {
                 <select value={lvType} onChange={(e) => setLvType(e.target.value)} style={{ padding: "12px 14px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 14, color: "#2b2440", outline: "none" }}>
                   <option>Casual leave</option><option>Sick leave</option><option>Annual leave</option><option>Half day</option>
                 </select>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div className="rp-form-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   <input type="date" value={lvFrom} onChange={(e) => setLvFrom(e.target.value)} style={{ padding: "12px 14px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, color: "#2b2440", outline: "none", boxSizing: "border-box", width: "100%" }} />
                   <input type="date" value={lvTo} onChange={(e) => setLvTo(e.target.value)} style={{ padding: "12px 14px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, color: "#2b2440", outline: "none", boxSizing: "border-box", width: "100%" }} />
                 </div>
@@ -728,9 +730,9 @@ export default function AttendancePortal() {
 
   // Admin
   return (
-    <div style={{ minHeight: "100vh", display: "flex", gap: 24, padding: 24, boxSizing: "border-box", maxWidth: 1440, margin: "0 auto" }}>
-      <div style={{ width: 236, flexShrink: 0, background: "rgba(255,255,255,0.5)", backdropFilter: "blur(26px)", WebkitBackdropFilter: "blur(26px)", border: "1px solid rgba(255,255,255,0.78)", borderRadius: 24, boxShadow: "0 12px 40px rgba(109,90,230,0.12)", padding: "24px 16px", display: "flex", flexDirection: "column", gap: 6, position: "sticky", top: 24, height: "calc(100vh - 48px)", boxSizing: "border-box" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 10px 18px", borderBottom: "1px solid rgba(109,90,230,0.1)", marginBottom: 12 }}>
+    <div className="rp-admin-shell" style={{ minHeight: "100vh", display: "flex", gap: 24, padding: 24, boxSizing: "border-box", maxWidth: 1440, margin: "0 auto" }}>
+      <div className="rp-sidebar" style={{ width: 236, flexShrink: 0, background: "rgba(255,255,255,0.5)", backdropFilter: "blur(26px)", WebkitBackdropFilter: "blur(26px)", border: "1px solid rgba(255,255,255,0.78)", borderRadius: 24, boxShadow: "0 12px 40px rgba(109,90,230,0.12)", padding: "24px 16px", display: "flex", flexDirection: "column", gap: 6, position: "sticky", top: 24, height: "calc(100vh - 48px)", boxSizing: "border-box" }}>
+        <div className="rp-sidebar-header" style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 10px 18px", borderBottom: "1px solid rgba(109,90,230,0.1)", marginBottom: 12 }}>
           <div style={{ width: 38, height: 38, borderRadius: 12, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#04101f", flexShrink: 0 }}>
             <Image src="/times-computers-logo.png" alt="Times Computers" width={38} height={38} style={{ objectFit: "cover", width: "100%", height: "100%" }} />
           </div>
@@ -739,20 +741,22 @@ export default function AttendancePortal() {
             <div style={{ fontSize: 11, fontWeight: 700, color: "#5a48c9", letterSpacing: "0.5px" }}>ADMIN PANEL</div>
           </div>
         </div>
+        <div className="rp-sidebar-nav">
         {navItems.map((nv) => (
-          <button key={nv.key} onClick={nv.go} style={nv.active
+          <button key={nv.key} onClick={nv.go} className="rp-nav-btn" style={nv.active
             ? { textAlign: "left", padding: "12px 16px", border: "none", borderRadius: 14, background: "linear-gradient(135deg,#6d5ae6,#8b74f0)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 16px rgba(109,90,230,0.3)" }
             : { textAlign: "left", padding: "12px 16px", border: "none", borderRadius: 14, background: "transparent", color: "#57506e", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>{nv.label}</button>
         ))}
-        <div style={{ flex: 1 }}></div>
-        <button onClick={logout} style={{ padding: 12, border: "1px solid rgba(109,90,230,0.22)", borderRadius: 14, background: "rgba(255,255,255,0.55)", color: "#5a48c9", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>Logout</button>
+        </div>
+        <div className="rp-sidebar-spacer" style={{ flex: 1 }}></div>
+        <button onClick={logout} className="rp-nav-btn" style={{ padding: 12, border: "1px solid rgba(109,90,230,0.22)", borderRadius: 14, background: "rgba(255,255,255,0.55)", color: "#5a48c9", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>Logout</button>
       </div>
 
-      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 22 }}>
+      <div className="rp-admin-main" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 22 }}>
 
         {tab === "dash" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 22, animation: "fadeUp .4s ease" }}>
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+            <div className="rp-header-row" style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
               <div>
                 <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Today&apos;s attendance</div>
                 <div style={{ fontSize: 14, color: "#6f6a85", marginTop: 4 }}>{todayDate} · Office IP {stIP} · Shift {fmtShift()}</div>
@@ -762,7 +766,7 @@ export default function AttendancePortal() {
                 <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 20 }}>{clock}</div>
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>
+            <div className="rp-stats-4" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>
               {statCards.map((s, i) => (
                 <div key={i} style={{ ...glass, borderRadius: 22, boxShadow: "0 12px 40px rgba(109,90,230,0.10)", padding: "22px 24px" }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: s.color, letterSpacing: "0.4px" }}>{s.label}</div>
@@ -771,7 +775,7 @@ export default function AttendancePortal() {
                 </div>
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 22, alignItems: "start" }}>
+            <div className="rp-two-col" style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 22, alignItems: "start" }}>
               <div style={{ ...glass, padding: "24px 28px" }}>
                 <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17, marginBottom: 14 }}>Live check-ins</div>
                 <div style={{ display: "flex", flexDirection: "column" }}>
@@ -838,7 +842,8 @@ export default function AttendancePortal() {
               <div style={{ fontSize: 12, color: "#a29dbb" }}>Passwords are hashed (bcrypt) before being stored — never kept in plain text.</div>
             </div>
             <div style={{ ...glass, padding: "22px 26px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1.8fr 1fr 1fr 1fr 0.8fr 0.8fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
+              <div className="rp-table-scroll">
+              <div className="rp-tbl-7" style={{ display: "grid", gridTemplateColumns: "1.8fr 1.8fr 1fr 1fr 1fr 0.8fr 0.8fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
                 <div>NAME</div><div>EMAIL</div><div>FACULTY ID</div><div>DEPARTMENT</div><div>BRANCH</div><div>ROLE</div><div></div>
               </div>
               <div style={{ maxHeight: 520, overflowY: "auto" }}>
@@ -847,7 +852,7 @@ export default function AttendancePortal() {
                 {dbUsers.map((u) => {
                   const p = u.role === "ADMIN" ? { bg: "rgba(109,90,230,0.12)", color: "#5a48c9" } : { bg: "rgba(31,169,122,0.14)", color: "#147a58" };
                   return (
-                    <div key={u.id} style={{ display: "grid", gridTemplateColumns: "1.8fr 1.8fr 1fr 1fr 1fr 0.8fr 0.8fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5 }}>
+                    <div key={u.id} className="rp-tbl-7" style={{ display: "grid", gridTemplateColumns: "1.8fr 1.8fr 1fr 1fr 1fr 0.8fr 0.8fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
                         <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg,#6d5ae6,#a78bfa)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 11, flexShrink: 0 }}>{initials(u.name)}</div>
                         <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</div>
@@ -862,17 +867,18 @@ export default function AttendancePortal() {
                   );
                 })}
               </div>
+              </div>
             </div>
           </div>
         )}
 
         {tab === "rep" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp .4s ease" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div className="rp-header-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Monthly report</div>
               <button style={{ padding: "11px 20px", border: "1px solid rgba(109,90,230,0.25)", borderRadius: 12, background: "rgba(255,255,255,0.6)", color: "#5a48c9", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>Export CSV</button>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
+            <div className="rp-stats-3" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
               <div style={{ ...glass, borderRadius: 20, padding: "20px 24px", boxShadow: "0 12px 40px rgba(109,90,230,0.10)" }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#147a58" }}>FACULTY TRACKED</div>
                 <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 32, marginTop: 4 }}>{reportRows.length}</div>
@@ -914,13 +920,14 @@ export default function AttendancePortal() {
               <div style={{ fontSize: 12.5, color: "#a29dbb" }}>Showing {filteredReportRows.length} of {reportRows.length}</div>
             </div>
             <div style={{ ...glass, padding: "22px 26px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
+              <div className="rp-table-scroll">
+              <div className="rp-tbl-8" style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
                 <div>FACULTY</div><div>DEPARTMENT</div><div>PRESENT</div><div>LATE</div><div>ABSENT</div><div>LEAVE</div><div>HOURS</div><div>DEDUCTION</div>
               </div>
               <div style={{ maxHeight: 560, overflowY: "auto" }}>
                 {filteredReportRows.length === 0 && <div style={{ padding: "16px 10px", color: "#a29dbb", fontSize: 13.5 }}>No matching records.</div>}
                 {filteredReportRows.map((r, i) => (
-                  <div key={i} style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5, background: r.rowBg, borderRadius: 10 }}>
+                  <div key={i} className="rp-tbl-8" style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5, background: r.rowBg, borderRadius: 10 }}>
                     <div style={{ fontWeight: 600 }}>{r.name}</div>
                     <div style={{ color: "#57506e" }}>{r.dept}</div>
                     <div style={{ fontWeight: 600, color: "#147a58" }}>{r.present}</div>
@@ -932,6 +939,7 @@ export default function AttendancePortal() {
                   </div>
                 ))}
               </div>
+              </div>
             </div>
           </div>
         )}
@@ -939,7 +947,7 @@ export default function AttendancePortal() {
         {tab === "not" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp .4s ease" }}>
             <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Notice board</div>
-            <div style={{ display: "grid", gridTemplateColumns: "0.9fr 1.1fr", gap: 22, alignItems: "start" }}>
+            <div className="rp-two-col" style={{ display: "grid", gridTemplateColumns: "0.9fr 1.1fr", gap: 22, alignItems: "start" }}>
               <div style={{ ...glass, padding: "26px 28px", display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17 }}>Send a notice</div>
                 <input placeholder="Notice title" value={ntTitle} onChange={(e) => setNtTitle(e.target.value)} style={{ padding: "12px 14px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 14, outline: "none" }} />
@@ -1006,7 +1014,7 @@ export default function AttendancePortal() {
                 <label style={{ fontSize: 13, fontWeight: 700, color: "#57506e" }}>Office IP address (attendance allowed only from this IP)</label>
                 <input value={stIP} onChange={(e) => setStIP(e.target.value)} style={{ padding: "13px 16px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 14.5, outline: "none", fontWeight: 600 }} />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+              <div className="rp-stats-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   <label style={{ fontSize: 13, fontWeight: 700, color: "#57506e" }}>Shift start</label>
                   <input type="time" value={stShift} onChange={(e) => setStShift(e.target.value)} style={{ padding: "13px 14px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 14, outline: "none", boxSizing: "border-box", width: "100%" }} />
