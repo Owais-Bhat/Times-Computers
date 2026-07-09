@@ -27,7 +27,27 @@ input::placeholder, textarea::placeholder {
   color: #a29dbb;
 }
 button {
-  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, filter .15s ease;
+}
+button:hover:not(:disabled) {
+  filter: brightness(1.04);
+}
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+button:focus-visible {
+  outline: 2px solid #6d5ae6;
+  outline-offset: 2px;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(109,90,230,0.55) !important;
+  box-shadow: 0 0 0 3px rgba(109,90,230,0.14);
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .font-display {
@@ -71,15 +91,21 @@ button {
   .rp-two-col {
     grid-template-columns: 1fr !important;
   }
-  /* Topbar is already too wide for mid-size screens, not just phones */
+  /* Topbar: stack into brand row / status row / identity row instead of a
+     centered wrap — the full contents don't fit in one row below ~900px */
   .rp-topbar {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch !important;
     gap: 12px !important;
-    justify-content: center !important;
   }
   .rp-topbar-right {
     flex-wrap: wrap;
-    justify-content: center !important;
+    align-items: center;
+    justify-content: space-between;
+    row-gap: 10px;
+  }
+  .rp-net-chip {
+    flex-basis: 100%;
   }
   .rp-stats-4 {
     grid-template-columns: repeat(2, 1fr) !important;
@@ -224,6 +250,13 @@ button {
   .rp-stat-value {
     font-size: 28px !important;
   }
+  /* Cards keep desktop-scale padding otherwise, which wastes ~16% of a
+     375px screen and makes everything feel cramped-yet-oversized */
+  .rp-card {
+    padding: 20px 16px !important;
+    border-radius: 20px !important;
+  }
+
   /* iOS Safari zooms the page when focusing any input with font-size < 16px.
      !important is needed to beat the inline styles on the form controls. */
   input, select, textarea {

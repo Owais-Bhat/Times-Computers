@@ -564,19 +564,19 @@ export default function AttendancePortal() {
     return (
       <div className="rp-page" style={{ minHeight: "100vh", padding: "24px 32px 48px", boxSizing: "border-box", maxWidth: 1280, margin: "0 auto" }}>
         <div className="rp-topbar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.5)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.75)", borderRadius: 20, padding: "14px 22px", boxShadow: "0 8px 30px rgba(109,90,230,0.10)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 12, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#04101f" }}>
+          <div className="rp-topbar-brand" style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 12, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#04101f", flexShrink: 0 }}>
               <Image src="/times-computers-logo.png" alt="Times Computers" width={38} height={38} style={{ objectFit: "cover", width: "100%", height: "100%" }} />
             </div>
-            <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 18 }}>Times Computers</div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#5a48c9", background: "rgba(109,90,230,0.12)", padding: "4px 12px", borderRadius: 999, letterSpacing: "0.4px" }}>FACULTY</div>
+            <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 18, whiteSpace: "nowrap" }}>Times Computers</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#5a48c9", background: "rgba(109,90,230,0.12)", padding: "4px 12px", borderRadius: 999, letterSpacing: "0.4px", whiteSpace: "nowrap" }}>FACULTY</div>
           </div>
           <div className="rp-topbar-right" style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, padding: "6px 14px", borderRadius: 999, background: netChip.bg, color: netChip.color, maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word" }}>
+            <div className="rp-net-chip" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, padding: "6px 14px", borderRadius: 999, background: netChip.bg, color: netChip.color, maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word", boxSizing: "border-box" }}>
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: "currentColor", animation: "pulseDot 2s infinite", flexShrink: 0 }}></div>
               {netChip.label}
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div className="rp-topbar-user" style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#1fa97a,#7ad9b8)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 14 }}>{initials(session.user.name ?? "Employee")}</div>
               <div style={{ fontSize: 14, fontWeight: 600 }}>{session.user.name}</div>
             </div>
@@ -586,7 +586,7 @@ export default function AttendancePortal() {
 
         <div className="rp-two-col" style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 22, marginTop: 22, alignItems: "start" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-            <div style={{ ...glass, padding: 30, display: "flex", flexDirection: "column", gap: 6, animation: "fadeUp .4s ease" }}>
+            <div className="rp-card" style={{ ...glass, padding: 30, display: "flex", flexDirection: "column", gap: 6, animation: "fadeUp .4s ease" }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: "#6f6a85" }}>{todayDate}</div>
               <div className="rp-clock" style={{ fontFamily: sora, fontWeight: 800, fontSize: 52, letterSpacing: "-1.5px", lineHeight: 1.1 }}>{clock}</div>
               <div style={{ fontSize: 13.5, color: "#6f6a85", marginTop: 2 }}>Shift {fmtShift()} · Grace {stGrace} min · Check-in after {fmtLateAfter()} counts as late</div>
@@ -640,7 +640,7 @@ export default function AttendancePortal() {
               )}
             </div>
 
-            <div className="rp-late-card" style={{ ...glass, padding: "26px 30px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
+            <div className="rp-late-card rp-card" style={{ ...glass, padding: "26px 30px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17 }}>Late arrivals (last 14 days)</div>
                 <div style={{ fontSize: 13.5, color: "#6f6a85", lineHeight: 1.5 }}>
@@ -655,7 +655,7 @@ export default function AttendancePortal() {
               </div>
             </div>
 
-            <div style={{ ...glass, padding: "26px 30px" }}>
+            <div className="rp-card" style={{ ...glass, padding: "26px 30px" }}>
               <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17, marginBottom: 16 }}>My attendance — last 14 days</div>
               <div className="rp-table-scroll">
               <div className="rp-tbl-5" style={{ display: "grid", gridTemplateColumns: "1.4fr 0.9fr 0.9fr 0.7fr 1fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
@@ -676,7 +676,7 @@ export default function AttendancePortal() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-            <div style={{ ...glass, padding: "26px 28px", animation: "fadeUp .5s ease" }}>
+            <div className="rp-card" style={{ ...glass, padding: "26px 28px", animation: "fadeUp .5s ease" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                 <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17 }}>Notice board</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#5a48c9", background: "rgba(109,90,230,0.12)", padding: "4px 12px", borderRadius: 999 }}>{notices.length} notices</div>
@@ -695,7 +695,7 @@ export default function AttendancePortal() {
               </div>
             </div>
 
-            <div style={{ ...glass, padding: "26px 28px" }}>
+            <div className="rp-card" style={{ ...glass, padding: "26px 28px" }}>
               <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17, marginBottom: 16 }}>Request leave</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <select value={lvType} onChange={(e) => setLvType(e.target.value)} style={{ padding: "12px 14px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 14, color: "#2b2440", outline: "none" }}>
@@ -782,7 +782,7 @@ export default function AttendancePortal() {
             </div>
             <div className="rp-stats-4" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>
               {statCards.map((s, i) => (
-                <div key={i} style={{ ...glass, borderRadius: 22, boxShadow: "0 12px 40px rgba(109,90,230,0.10)", padding: "22px 24px" }}>
+                <div key={i} className="rp-card" style={{ ...glass, borderRadius: 22, boxShadow: "0 12px 40px rgba(109,90,230,0.10)", padding: "22px 24px" }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: s.color, letterSpacing: "0.4px" }}>{s.label}</div>
                   <div className="rp-stat-value" style={{ fontFamily: sora, fontWeight: 800, fontSize: 38, letterSpacing: "-1px", marginTop: 6 }}>{s.value}</div>
                   <div style={{ fontSize: 12.5, color: "#a29dbb", marginTop: 2 }}>{s.sub}</div>
@@ -790,7 +790,7 @@ export default function AttendancePortal() {
               ))}
             </div>
             <div className="rp-two-col" style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 22, alignItems: "start" }}>
-              <div style={{ ...glass, padding: "24px 28px" }}>
+              <div className="rp-card" style={{ ...glass, padding: "24px 28px" }}>
                 <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17, marginBottom: 14 }}>Live check-ins</div>
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   {liveFeed.length === 0 && <div style={{ color: "#a29dbb", fontSize: 13.5 }}>No check-ins yet today.</div>}
@@ -807,7 +807,7 @@ export default function AttendancePortal() {
                   ))}
                 </div>
               </div>
-              <div style={{ ...glass, padding: "24px 28px" }}>
+              <div className="rp-card" style={{ ...glass, padding: "24px 28px" }}>
                 <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17, marginBottom: 4 }}>Late tracker</div>
                 <div style={{ fontSize: 13, color: "#6f6a85", marginBottom: 14 }}>{stCut} lates in a month = 1 day salary cut</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -833,7 +833,7 @@ export default function AttendancePortal() {
         {tab === "emp" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp .4s ease" }}>
             <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Faculty accounts <span style={{ fontSize: 16, color: "#a29dbb", fontWeight: 600 }}>· {dbUsers.length} total · stored in database</span></div>
-            <div style={{ ...glass, borderRadius: 20, boxShadow: "0 12px 40px rgba(109,90,230,0.10)", padding: "18px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div className="rp-card" style={{ ...glass, borderRadius: 20, boxShadow: "0 12px 40px rgba(109,90,230,0.10)", padding: "18px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                 <input placeholder="Full name" value={neName} onChange={(e) => setNeName(e.target.value)} style={{ flex: 1.2, minWidth: 150, padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, outline: "none" }} />
                 <input type="email" placeholder="Email" value={neEmail} onChange={(e) => setNeEmail(e.target.value)} style={{ flex: 1.2, minWidth: 170, padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, outline: "none" }} />
@@ -855,7 +855,7 @@ export default function AttendancePortal() {
               )}
               <div style={{ fontSize: 12, color: "#a29dbb" }}>Passwords are hashed (bcrypt) before being stored — never kept in plain text.</div>
             </div>
-            <div style={{ ...glass, padding: "22px 26px" }}>
+            <div className="rp-card" style={{ ...glass, padding: "22px 26px" }}>
               <div className="rp-table-scroll">
               <div className="rp-tbl-7" style={{ display: "grid", gridTemplateColumns: "1.8fr 1.8fr 1fr 1fr 1fr 0.8fr 0.8fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
                 <div>NAME</div><div>EMAIL</div><div>FACULTY ID</div><div>DEPARTMENT</div><div>BRANCH</div><div>ROLE</div><div></div>
@@ -893,20 +893,20 @@ export default function AttendancePortal() {
               <button style={{ padding: "11px 20px", border: "1px solid rgba(109,90,230,0.25)", borderRadius: 12, background: "rgba(255,255,255,0.6)", color: "#5a48c9", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>Export CSV</button>
             </div>
             <div className="rp-stats-3" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
-              <div style={{ ...glass, borderRadius: 20, padding: "20px 24px", boxShadow: "0 12px 40px rgba(109,90,230,0.10)" }}>
+              <div className="rp-card" style={{ ...glass, borderRadius: 20, padding: "20px 24px", boxShadow: "0 12px 40px rgba(109,90,230,0.10)" }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#147a58" }}>FACULTY TRACKED</div>
                 <div className="rp-stat-value" style={{ fontFamily: sora, fontWeight: 800, fontSize: 32, marginTop: 4 }}>{reportRows.length}</div>
               </div>
-              <div style={{ ...glass, borderRadius: 20, padding: "20px 24px", boxShadow: "0 12px 40px rgba(109,90,230,0.10)" }}>
+              <div className="rp-card" style={{ ...glass, borderRadius: 20, padding: "20px 24px", boxShadow: "0 12px 40px rgba(109,90,230,0.10)" }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#a8641a" }}>TOTAL LATES</div>
                 <div className="rp-stat-value" style={{ fontFamily: sora, fontWeight: 800, fontSize: 32, marginTop: 4 }}>{totalLates}</div>
               </div>
-              <div style={{ ...glass, borderRadius: 20, padding: "20px 24px", boxShadow: "0 12px 40px rgba(109,90,230,0.10)" }}>
+              <div className="rp-card" style={{ ...glass, borderRadius: 20, padding: "20px 24px", boxShadow: "0 12px 40px rgba(109,90,230,0.10)" }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#b13a60" }}>SALARY-CUT DAYS</div>
                 <div className="rp-stat-value" style={{ fontFamily: sora, fontWeight: 800, fontSize: 32, marginTop: 4 }}>{totalCuts}</div>
               </div>
             </div>
-            <div style={{ ...glass, padding: "18px 22px", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <div className="rp-card" style={{ ...glass, padding: "18px 22px", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
               <input
                 placeholder="Search faculty by name…"
                 value={repQuery}
@@ -933,7 +933,7 @@ export default function AttendancePortal() {
               )}
               <div style={{ fontSize: 12.5, color: "#a29dbb" }}>Showing {filteredReportRows.length} of {reportRows.length}</div>
             </div>
-            <div style={{ ...glass, padding: "22px 26px" }}>
+            <div className="rp-card" style={{ ...glass, padding: "22px 26px" }}>
               <div className="rp-table-scroll">
               <div className="rp-tbl-8" style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
                 <div>FACULTY</div><div>DEPARTMENT</div><div>PRESENT</div><div>LATE</div><div>ABSENT</div><div>LEAVE</div><div>HOURS</div><div>DEDUCTION</div>
@@ -962,7 +962,7 @@ export default function AttendancePortal() {
           <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp .4s ease" }}>
             <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Notice board</div>
             <div className="rp-two-col" style={{ display: "grid", gridTemplateColumns: "0.9fr 1.1fr", gap: 22, alignItems: "start" }}>
-              <div style={{ ...glass, padding: "26px 28px", display: "flex", flexDirection: "column", gap: 12 }}>
+              <div className="rp-card" style={{ ...glass, padding: "26px 28px", display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17 }}>Send a notice</div>
                 <input placeholder="Notice title" value={ntTitle} onChange={(e) => setNtTitle(e.target.value)} style={{ padding: "12px 14px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 14, outline: "none" }} />
                 <textarea placeholder="Write your message to all faculty…" value={ntBody} onChange={(e) => setNtBody(e.target.value)} rows={5} style={{ padding: "12px 14px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 14, outline: "none", resize: "vertical" }}></textarea>
@@ -974,7 +974,7 @@ export default function AttendancePortal() {
                   <div style={{ padding: "11px 14px", borderRadius: 12, background: "rgba(31,169,122,0.10)", border: "1px solid rgba(31,169,122,0.25)", color: "#147a58", fontSize: 13, fontWeight: 600 }}>Notice published — visible on every faculty portal.</div>
                 )}
               </div>
-              <div style={{ ...glass, padding: "26px 28px", display: "flex", flexDirection: "column", gap: 12 }}>
+              <div className="rp-card" style={{ ...glass, padding: "26px 28px", display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17 }}>Published notices</div>
                 {noticeItems.map((n) => (
                   <div key={n.id} style={{ padding: "16px 18px", borderRadius: 16, background: "rgba(255,255,255,0.55)", border: "1px solid rgba(109,90,230,0.12)" }}>
@@ -999,7 +999,7 @@ export default function AttendancePortal() {
             <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Leave requests <span style={{ fontSize: 16, color: "#a29dbb", fontWeight: 600 }}>· {leaves.filter((l) => l.status === "Pending").length} pending</span></div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {leaveRows.map((l) => (
-                <div key={l.id} className="rp-leave-card" style={{ ...glass, borderRadius: 20, boxShadow: "0 10px 32px rgba(109,90,230,0.10)", padding: "20px 24px", display: "flex", alignItems: "center", gap: 18 }}>
+                <div key={l.id} className="rp-leave-card rp-card" style={{ ...glass, borderRadius: 20, boxShadow: "0 10px 32px rgba(109,90,230,0.10)", padding: "20px 24px", display: "flex", alignItems: "center", gap: 18 }}>
                   <div style={{ width: 40, height: 40, borderRadius: "50%", background: l.avBg, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 13.5, flexShrink: 0 }}>{l.initials}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 15 }}>{l.name} <span style={{ fontWeight: 600, color: "#6f6a85", fontSize: 13.5 }}>· {l.type}</span></div>
@@ -1023,7 +1023,7 @@ export default function AttendancePortal() {
         {tab === "set" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp .4s ease", maxWidth: 640 }}>
             <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Attendance settings</div>
-            <div style={{ ...glass, padding: "28px 30px", display: "flex", flexDirection: "column", gap: 18 }}>
+            <div className="rp-card" style={{ ...glass, padding: "28px 30px", display: "flex", flexDirection: "column", gap: 18 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label style={{ fontSize: 13, fontWeight: 700, color: "#57506e" }}>Office IP address(es) — comma-separated (the same WiFi can show up as an IPv4 or IPv6 address depending on the device, so add both if a check-in gets rejected)</label>
                 <input value={stIP} onChange={(e) => setStIP(e.target.value)} placeholder="e.g. 49.36.202.50, 2405:201:5502:c32c::/64" style={{ padding: "13px 16px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 14.5, outline: "none", fontWeight: 600, wordBreak: "break-word" }} />
