@@ -1054,6 +1054,31 @@ export default function AttendancePortal() {
                 <div style={{ padding: "11px 14px", borderRadius: 12, background: "rgba(31,169,122,0.10)", border: "1px solid rgba(31,169,122,0.25)", color: "#147a58", fontSize: 13, fontWeight: 600 }}>Settings saved.</div>
               )}
             </div>
+
+            <div className="rp-card" style={{ ...glass, padding: "28px 30px", display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17 }}>Setup guide</div>
+              <div style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(109,90,230,0.07)", border: "1px solid rgba(109,90,230,0.15)", fontSize: 13.5, color: "#57506e", lineHeight: 1.6, overflowWrap: "anywhere" }}>
+                Portal link (share this with faculty):{" "}
+                <a href="https://timescomputer.networkingexperts.in" style={{ color: "#5a48c9", fontWeight: 700 }}>timescomputer.networkingexperts.in</a>
+              </div>
+              <ol style={{ margin: 0, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 10, fontSize: 13.5, color: "#57506e", lineHeight: 1.6 }}>
+                <li>
+                  <b>Set your office IP(s) above.</b> On an office computer, search Google for &quot;what is my IP&quot; and add the address here. The same WiFi can show an IPv4 <i>and</i> an IPv6 address — add both, separated by a comma. If a faculty check-in is rejected, their error message shows the IP their device used: add that IP to the list and save.
+                </li>
+                <li>
+                  <b>Set the shift start, grace minutes and lates-per-cut</b>, then press Save settings. Check-ins after shift start + grace are marked Late automatically; every {stCut || 3} lates in a month deducts one day of salary in the monthly report.
+                </li>
+                <li>
+                  <b>Create accounts in the Faculty accounts tab</b> — name, email, a temporary password and Faculty ID. Give each person their email, password and the portal link above.
+                </li>
+                <li>
+                  <b>Faculty daily use:</b> open the portal link on office WiFi, sign in, press Check In on arrival and Check Out when leaving (the checkout form records classes, students and remarks). Attendance appears here on the Dashboard instantly.
+                </li>
+              </ol>
+              <div style={{ padding: "12px 14px", borderRadius: 12, background: "rgba(232,145,45,0.10)", border: "1px solid rgba(232,145,45,0.25)", color: "#a8641a", fontSize: 13, fontWeight: 600, lineHeight: 1.55 }}>
+                Security note: if you are still using the first admin password you received, ask your developer to change it.
+              </div>
+            </div>
           </div>
         )}
 
