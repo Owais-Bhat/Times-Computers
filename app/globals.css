@@ -74,6 +74,15 @@ input:focus, select:focus, textarea:focus {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Grid tracks default to min-width:auto, so a wide table inside a card
+   inflates its whole column past the viewport. Let columns shrink and
+   the table scroll inside its own strip instead. */
+.rp-two-col > *,
+.rp-stats-4 > *,
+.rp-stats-3 > * {
+  min-width: 0;
+}
+
 .rp-mobile-topbar {
   display: none;
 }
