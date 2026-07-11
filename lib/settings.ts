@@ -69,6 +69,23 @@ function matchesEntry(clientIP: string, entry: string): boolean {
   return true;
 }
 
+// Suggests the office-IP entry that would allow the given client address:
+// IPv4 → the exact address; IPv6 → the whole /64 network, because devices
+// on the same WiFi rotate their host suffix but share the /64 prefix.
+export function suggestOfficeEntry(clientIP: string | null): string | null {
+  if (!clientIP) return null;
+  if (!clientIP.includes(":")) return clientIP;
+  const sides = clientIP.split("::");
+  if (sides.length > 2) return null;
+  const head = sides[0] ? sides[0].split(":") : [];
+  const tail = sides.length === 2 && sides[1] ? sides[1].split(":") : [];
+  const missing = 8 - head.length - tail.length;
+  if (missing < 0) return null;
+  const groups = [...head, ...Array(sides.length === 2 ? missing : 0).fill("0"), ...tail];
+  if (groups.length !== 8) return null;
+  return groups.slice(0, 4).map((g) => g || "0").join(":") + "::/64";
+}
+
 // officeIP can hold multiple comma-separated entries: exact IPv4/IPv6
 // addresses, or CIDR ranges (e.g. "2405:201:5502:c32c::/64") since the
 // same office network can present a different host address per device

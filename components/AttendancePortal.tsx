@@ -165,6 +165,7 @@ export default function AttendancePortal() {
   // detection the check-in endpoint enforces)
   const [onOfficeNetwork, setOnOfficeNetwork] = useState<boolean | null>(null);
   const [detectedIP, setDetectedIP] = useState<string | null>(null);
+  const [suggestedEntry, setSuggestedEntry] = useState<string | null>(null);
 
   // Monthly report filters
   const [repQuery, setRepQuery] = useState("");
@@ -219,6 +220,7 @@ export default function AttendancePortal() {
           if (cancelled || !data) return;
           setOnOfficeNetwork(data.onNetwork);
           setDetectedIP(data.detectedIP);
+          setSuggestedEntry(data.suggestedEntry ?? null);
         })
         .catch(() => {});
     };
@@ -1076,7 +1078,18 @@ export default function AttendancePortal() {
               </div>
               <div style={{ padding: "12px 14px", borderRadius: 12, background: onOfficeNetwork ? "rgba(31,169,122,0.10)" : "rgba(226,85,123,0.08)", border: `1px solid ${onOfficeNetwork ? "rgba(31,169,122,0.25)" : "rgba(226,85,123,0.22)"}`, fontSize: 13, fontWeight: 600, color: onOfficeNetwork ? "#147a58" : "#b13a60", lineHeight: 1.55, overflowWrap: "anywhere" }}>
                 {onOfficeNetwork === null ? "Checking this device's network…" : onOfficeNetwork ? "✓ This device is on the office network" : "✗ This device is NOT on the office network"}
-                {detectedIP && <span style={{ display: "block", marginTop: 4, fontWeight: 500, color: "#8a8499" }}>This device&apos;s IP: {detectedIP} — if faculty should check in from this network, add it above and save.</span>}
+                {detectedIP && <span style={{ display: "block", marginTop: 4, fontWeight: 500, color: "#8a8499" }}>This device&apos;s IP: {detectedIP}</span>}
+                {suggestedEntry && !onOfficeNetwork && (
+                  <button
+                    onClick={() => {
+                      const entries = stIP.split(",").map((s) => s.trim()).filter(Boolean);
+                      if (!entries.includes(suggestedEntry)) setStIP([...entries, suggestedEntry].join(", "));
+                    }}
+                    style={{ display: "block", marginTop: 10, padding: "9px 16px", border: "none", borderRadius: 10, background: "linear-gradient(135deg,#6d5ae6,#8b74f0)", color: "#fff", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}
+                  >
+                    + Add this network ({suggestedEntry}) — then press Save settings
+                  </button>
+                )}
               </div>
               <button onClick={saveSettings} style={{ padding: 14, border: "none", borderRadius: 14, background: "linear-gradient(135deg,#6d5ae6,#8b74f0)", color: "#fff", fontSize: 14.5, fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 20px rgba(109,90,230,0.3)", alignSelf: "flex-start", paddingLeft: 32, paddingRight: 32 }}>Save settings</button>
               {saved && (

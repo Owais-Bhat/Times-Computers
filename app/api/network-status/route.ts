@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getSettings, getClientIP, isOnOfficeNetwork } from "@/lib/settings";
+import { getSettings, getClientIP, isOnOfficeNetwork, suggestOfficeEntry } from "@/lib/settings";
 
 // Reports whether the calling device is currently on the office network,
 // using the same detection the check-in endpoint enforces.
@@ -12,5 +12,5 @@ export async function GET(req: Request) {
   const detectedIP = getClientIP(req);
   const onNetwork = isOnOfficeNetwork(detectedIP, settings.officeIP);
 
-  return NextResponse.json({ onNetwork, detectedIP });
+  return NextResponse.json({ onNetwork, detectedIP, suggestedEntry: suggestOfficeEntry(detectedIP) });
 }
