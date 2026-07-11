@@ -161,7 +161,10 @@ export default function AttendancePortal() {
   const [stGrace, setStGrace] = useState(5);
   const [stCut, setStCut] = useState(3);
   const [saved, setSaved] = useState(false);
-  const [onOfficeNetwork, setOnOfficeNetwork] = useState(true);
+  // null = still checking; set from /api/network-status (same server-side
+  // detection the check-in endpoint enforces)
+  const [onOfficeNetwork, setOnOfficeNetwork] = useState<boolean | null>(null);
+  const [detectedIP, setDetectedIP] = useState<string | null>(null);
 
   // Monthly report filters
   const [repQuery, setRepQuery] = useState("");
@@ -202,6 +205,28 @@ export default function AttendancePortal() {
       });
     return () => {
       cancelled = true;
+    };
+  }, [session]);
+
+  // Live office-network status: check on login and every 30s after
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    const check = () => {
+      fetch("/api/network-status")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (cancelled || !data) return;
+          setOnOfficeNetwork(data.onNetwork);
+          setDetectedIP(data.detectedIP);
+        })
+        .catch(() => {});
+    };
+    check();
+    const t = setInterval(check, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
     };
   }, [session]);
 
@@ -517,9 +542,12 @@ export default function AttendancePortal() {
   });
 
   const inPill = checkInLate ? pill("LATE") : pill("PRESENT");
-  const netChip = onOfficeNetwork
-    ? { bg: "rgba(31,169,122,0.14)", color: "#147a58", label: "Office network · " + stIP }
-    : { bg: "rgba(226,85,123,0.13)", color: "#b13a60", label: "Not on office network" };
+  const netChip =
+    onOfficeNetwork === null
+      ? { bg: "rgba(109,90,230,0.10)", color: "#6f6a85", label: "Checking network…" }
+      : onOfficeNetwork
+        ? { bg: "rgba(31,169,122,0.14)", color: "#147a58", label: "Office network" }
+        : { bg: "rgba(226,85,123,0.13)", color: "#b13a60", label: "Not in office" };
 
   if (status === "loading") {
     return (
@@ -591,9 +619,10 @@ export default function AttendancePortal() {
               <div className="rp-clock" style={{ fontFamily: sora, fontWeight: 800, fontSize: 52, letterSpacing: "-1.5px", lineHeight: 1.1 }}>{clock}</div>
               <div style={{ fontSize: 13.5, color: "#6f6a85", marginTop: 2 }}>Shift {fmtShift()} · Grace {stGrace} min · Check-in after {fmtLateAfter()} counts as late</div>
 
-              {!onOfficeNetwork && (
-                <div style={{ marginTop: 18, padding: "16px 18px", borderRadius: 16, background: "rgba(226,85,123,0.10)", border: "1px solid rgba(226,85,123,0.25)", color: "#b13a60", fontSize: 14, fontWeight: 600, lineHeight: 1.5, overflowWrap: "break-word", wordBreak: "break-word" }}>
-                  Check-in blocked — you are not connected to the office network ({stIP}). Attendance can only be marked from the office computer/IP.
+              {onOfficeNetwork === false && (
+                <div style={{ marginTop: 18, padding: "16px 18px", borderRadius: 16, background: "rgba(226,85,123,0.10)", border: "1px solid rgba(226,85,123,0.25)", color: "#b13a60", fontSize: 14, fontWeight: 600, lineHeight: 1.5, overflowWrap: "anywhere" }}>
+                  Check-in blocked — connect to the office WiFi and this will turn green automatically.
+                  {detectedIP && <span style={{ display: "block", marginTop: 6, fontSize: 12.5, fontWeight: 500, color: "#8a8499" }}>Your device&apos;s current IP: {detectedIP}</span>}
                 </div>
               )}
 
@@ -601,7 +630,7 @@ export default function AttendancePortal() {
                 <div style={{ marginTop: 12, padding: "12px 16px", borderRadius: 14, background: "rgba(226,85,123,0.10)", border: "1px solid rgba(226,85,123,0.25)", color: "#b13a60", fontSize: 13, fontWeight: 600, overflowWrap: "break-word", wordBreak: "break-word" }}>{checkInError}</div>
               )}
 
-              {onOfficeNetwork && !checkedIn && (
+              {onOfficeNetwork === true && !checkedIn && (
                 <button onClick={doCheckIn} style={{ marginTop: 18, padding: 17, border: "none", borderRadius: 18, background: "linear-gradient(135deg,#1fa97a,#3cc492)", color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", boxShadow: "0 12px 28px rgba(31,169,122,0.35)" }}>Check In</button>
               )}
 
@@ -1045,10 +1074,10 @@ export default function AttendancePortal() {
               <div style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(109,90,230,0.07)", border: "1px solid rgba(109,90,230,0.15)", fontSize: 13, color: "#57506e", lineHeight: 1.6 }}>
                 Rule preview: check-in after <b>{fmtLateAfter()}</b> is marked <b>Late</b>. Every <b>{stCut} lates</b> in a month deducts <b>1 day</b> of salary. Attendance is only accepted from IP <b>{stIP}</b>. Settings are saved to the database and apply to every check-in server-side.
               </div>
-              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13.5, fontWeight: 600, color: "#57506e" }}>
-                <input type="checkbox" checked={onOfficeNetwork} onChange={(e) => setOnOfficeNetwork(e.target.checked)} />
-                Simulate: my device is on office network (demo toggle, client-side only)
-              </label>
+              <div style={{ padding: "12px 14px", borderRadius: 12, background: onOfficeNetwork ? "rgba(31,169,122,0.10)" : "rgba(226,85,123,0.08)", border: `1px solid ${onOfficeNetwork ? "rgba(31,169,122,0.25)" : "rgba(226,85,123,0.22)"}`, fontSize: 13, fontWeight: 600, color: onOfficeNetwork ? "#147a58" : "#b13a60", lineHeight: 1.55, overflowWrap: "anywhere" }}>
+                {onOfficeNetwork === null ? "Checking this device's network…" : onOfficeNetwork ? "✓ This device is on the office network" : "✗ This device is NOT on the office network"}
+                {detectedIP && <span style={{ display: "block", marginTop: 4, fontWeight: 500, color: "#8a8499" }}>This device&apos;s IP: {detectedIP} — if faculty should check in from this network, add it above and save.</span>}
+              </div>
               <button onClick={saveSettings} style={{ padding: 14, border: "none", borderRadius: 14, background: "linear-gradient(135deg,#6d5ae6,#8b74f0)", color: "#fff", fontSize: 14.5, fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 20px rgba(109,90,230,0.3)", alignSelf: "flex-start", paddingLeft: 32, paddingRight: 32 }}>Save settings</button>
               {saved && (
                 <div style={{ padding: "11px 14px", borderRadius: 12, background: "rgba(31,169,122,0.10)", border: "1px solid rgba(31,169,122,0.25)", color: "#147a58", fontSize: 13, fontWeight: 600 }}>Settings saved.</div>
