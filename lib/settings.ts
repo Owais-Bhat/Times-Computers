@@ -9,18 +9,65 @@ export async function getSettings() {
   return settings;
 }
 
+// Shift times (e.g. "09:00") are always office-local wall-clock time, but the
+// Node process may run in a different timezone (production runs in UTC).
+// All office-hours math must go through this zone rather than server-local time.
+export const OFFICE_TIMEZONE = "Asia/Kolkata";
+
+function zonedParts(date: Date, timeZone: string) {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  const parts = Object.fromEntries(dtf.formatToParts(date).map((p) => [p.type, p.value]));
+  return {
+    year: Number(parts.year),
+    month: Number(parts.month),
+    day: Number(parts.day),
+    hour: Number(parts.hour),
+    minute: Number(parts.minute),
+    second: Number(parts.second),
+  };
+}
+
+// Converts wall-clock components in `timeZone` to the real UTC instant they represent.
+function zonedTimeToUtc(
+  y: number,
+  monthIdx: number,
+  d: number,
+  hh: number,
+  mm: number,
+  ss: number,
+  timeZone: string
+) {
+  // Offset (ms) of `timeZone` from UTC, measured near the target instant.
+  const reference = new Date(Date.UTC(y, monthIdx, d, hh, mm, ss));
+  const zoned = zonedParts(reference, timeZone);
+  const zonedAsUTC = Date.UTC(zoned.year, zoned.month - 1, zoned.day, zoned.hour, zoned.minute, zoned.second);
+  const offsetMs = zonedAsUTC - reference.getTime();
+  return new Date(Date.UTC(y, monthIdx, d, hh, mm, ss) - offsetMs);
+}
+
 export function computeLateMinutes(checkInAt: Date, shiftStart: string, graceMinutes: number) {
   const [h, m] = shiftStart.split(":").map(Number);
-  const deadline = new Date(checkInAt);
-  deadline.setHours(h, m + graceMinutes, 0, 0);
+  const { year, month, day } = zonedParts(checkInAt, OFFICE_TIMEZONE);
+  const deadline = zonedTimeToUtc(year, month - 1, day, h, m + graceMinutes, 0, OFFICE_TIMEZONE);
   const diffMs = checkInAt.getTime() - deadline.getTime();
   return diffMs > 0 ? Math.ceil(diffMs / 60000) : 0;
 }
 
+// Start of the office-local calendar day (in OFFICE_TIMEZONE) that `d` falls in,
+// expressed as the equivalent UTC instant — so day-bucketing stays correct
+// regardless of the server process's own timezone.
 export function startOfDay(d: Date) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
+  const { year, month, day } = zonedParts(d, OFFICE_TIMEZONE);
+  return zonedTimeToUtc(year, month - 1, day, 0, 0, 0, OFFICE_TIMEZONE);
 }
 
 export function getClientIP(req: Request) {
