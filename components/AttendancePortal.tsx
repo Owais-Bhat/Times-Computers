@@ -6,7 +6,18 @@ import { useSession, signIn, signOut } from "next-auth/react";
 
 type PillStyle = { bg: string; color: string };
 type Notice = { id: number; title: string; body: string; priority: string; date: string };
-type Leave = { id: number; name: string; dept: string; type: string; range: string; reason: string; status: string };
+type DbLeave = {
+  id: string;
+  userId: string;
+  userName: string;
+  userDept: string;
+  type: string;
+  fromDate: string;
+  toDate: string;
+  reason: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  createdAt: string;
+};
 type DbUser = {
   id: string;
   name: string;
@@ -201,12 +212,14 @@ export default function AttendancePortal() {
 
   // Notices / leave requests (kept as lightweight in-memory state — not part of the DB schema)
   const [notices, setNotices] = useState<Notice[]>([]);
-  const [leaves, setLeaves] = useState<Leave[]>([]);
+  const [leaves, setLeaves] = useState<DbLeave[]>([]);
   const [lvType, setLvType] = useState("Casual leave");
   const [lvFrom, setLvFrom] = useState("");
   const [lvTo, setLvTo] = useState("");
   const [lvReason, setLvReason] = useState("");
   const [lvSent, setLvSent] = useState(false);
+  const [lvLoading, setLvLoading] = useState(false);
+  const [lvError, setLvError] = useState<string | null>(null);
   const [ntTitle, setNtTitle] = useState("");
   const [ntBody, setNtBody] = useState("");
   const [ntPriority, setNtPriority] = useState("Normal");
@@ -248,7 +261,7 @@ export default function AttendancePortal() {
           setDetectedIP(data.detectedIP);
           setSuggestedEntry(data.suggestedEntry ?? null);
         })
-        .catch(() => {});
+        .catch(() => { });
     };
     check();
     const t = setInterval(check, 30000);
@@ -270,6 +283,19 @@ export default function AttendancePortal() {
     return () => {
       cancelled = true;
     };
+  }, [session?.user?.id, session?.user?.role]);
+
+  // Load leave requests once logged in
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    const url = session.user.role === "ADMIN" ? "/api/admin/leave" : "/api/leave";
+    fetch(url)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data) setLeaves(data.leaves);
+      });
+    return () => { cancelled = true; };
   }, [session?.user?.id, session?.user?.role]);
 
   // Load admin attendance data once logged in as admin
@@ -459,13 +485,25 @@ export default function AttendancePortal() {
     setCoRemarks("");
   }
 
-  function submitLeave() {
-    const range = (lvFrom || "TBD") + (lvTo && lvTo !== lvFrom ? " – " + lvTo : "");
-    setLeaves((ls) => [{ id: Date.now(), name: session?.user?.name ?? "Employee", dept: session?.user?.department ?? "General", type: lvType, range, reason: lvReason || "—", status: "Pending" }, ...ls]);
-    setLvSent(true);
-    setLvFrom("");
-    setLvTo("");
-    setLvReason("");
+  async function submitLeave() {
+    if (!lvFrom) { setLvError("Please select a start date."); return; }
+    setLvError(null);
+    setLvLoading(true);
+    try {
+      const res = await fetch("/api/leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: lvType, fromDate: lvFrom, toDate: lvTo || lvFrom, reason: lvReason }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setLvError(data.error || "Failed to submit."); return; }
+      setLeaves((ls) => [data.leave, ...ls]);
+      setLvSent(true);
+      setLvFrom(""); setLvTo(""); setLvReason("");
+      setTimeout(() => setLvSent(false), 4000);
+    } finally {
+      setLvLoading(false);
+    }
   }
   function sendNotice() {
     setNotices((ns) => [{ id: Date.now(), title: ntTitle || "Untitled notice", body: ntBody || "", priority: ntPriority, date: "Just now" }, ...ns]);
@@ -597,18 +635,29 @@ export default function AttendancePortal() {
   );
 
   const leaveRows = leaves.map((l) => {
-    const p = pill(l.status);
+    const displayStatus = l.status === "PENDING" ? "Pending" : l.status === "APPROVED" ? "Approved" : "Rejected";
+    const range = l.fromDate + (l.toDate && l.toDate !== l.fromDate ? " – " + l.toDate : "");
+    const p = pill(displayStatus);
     return {
-      ...l, initials: initials(l.name), avBg: "linear-gradient(135deg,#6d5ae6,#a78bfa)",
-      pending: l.status === "Pending", decided: l.status !== "Pending", stBg: p.bg, stColor: p.color,
-      approve: () => setLeaves((ls) => ls.map((x) => (x.id === l.id ? { ...x, status: "Approved" } : x))),
-      reject: () => setLeaves((ls) => ls.map((x) => (x.id === l.id ? { ...x, status: "Rejected" } : x))),
+      ...l, name: l.userName, dept: l.userDept, range, displayStatus,
+      initials: initials(l.userName), avBg: "linear-gradient(135deg,#6d5ae6,#a78bfa)",
+      pending: l.status === "PENDING", decided: l.status !== "PENDING", stBg: p.bg, stColor: p.color,
+      approve: async () => {
+        const res = await fetch(`/api/admin/leave/${l.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "APPROVED" }) });
+        if (res.ok) setLeaves((ls) => ls.map((x) => (x.id === l.id ? { ...x, status: "APPROVED" } : x)));
+      },
+      reject: async () => {
+        const res = await fetch(`/api/admin/leave/${l.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "REJECTED" }) });
+        if (res.ok) setLeaves((ls) => ls.map((x) => (x.id === l.id ? { ...x, status: "REJECTED" } : x)));
+      },
     };
   });
 
-  const myLeaves = leaves.filter((l) => l.name === (session?.user?.name ?? "")).map((l) => {
-    const p = pill(l.status);
-    return { type: l.type, range: l.range, status: l.status, stBg: p.bg, stColor: p.color };
+  const myLeaves = leaves.filter((l) => l.userId === session?.user?.id).map((l) => {
+    const displayStatus = l.status === "PENDING" ? "Pending" : l.status === "APPROVED" ? "Approved" : "Rejected";
+    const range = l.fromDate + (l.toDate && l.toDate !== l.fromDate ? " – " + l.toDate : "");
+    const p = pill(displayStatus);
+    return { type: l.type, range, status: displayStatus, stBg: p.bg, stColor: p.color };
   });
 
   const inPill = checkInLate ? pill("LATE") : pill("PRESENT");
@@ -757,19 +806,19 @@ export default function AttendancePortal() {
             <div className="rp-card" style={{ ...glass, padding: "26px 30px" }}>
               <div style={{ fontFamily: sora, fontWeight: 700, fontSize: 17, marginBottom: 16 }}>My attendance — last 14 days</div>
               <div className="rp-table-scroll">
-              <div className="rp-tbl-5" style={{ display: "grid", gridTemplateColumns: "1.4fr 0.9fr 0.9fr 0.7fr 1fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
-                <div>DATE</div><div>CHECK IN</div><div>CHECK OUT</div><div>HOURS</div><div>STATUS</div>
-              </div>
-              {myDays.length === 0 && <div style={{ padding: "16px 10px", color: "#a29dbb", fontSize: 13.5 }}>No attendance recorded yet.</div>}
-              {myDays.map((dd, i) => (
-                <div key={i} className="rp-tbl-5" style={{ display: "grid", gridTemplateColumns: "1.4fr 0.9fr 0.9fr 0.7fr 1fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5 }}>
-                  <div style={{ fontWeight: 600 }}>{dd.date}</div>
-                  <div style={{ color: "#57506e" }}>{dd.in}</div>
-                  <div style={{ color: "#57506e" }}>{dd.out}</div>
-                  <div style={{ color: "#57506e" }}>{dd.hours}</div>
-                  <div><span style={{ fontSize: 11.5, fontWeight: 700, padding: "4px 11px", borderRadius: 999, background: dd.pillBg, color: dd.pillColor }}>{dd.status}</span></div>
+                <div className="rp-tbl-5" style={{ display: "grid", gridTemplateColumns: "1.4fr 0.9fr 0.9fr 0.7fr 1fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
+                  <div>DATE</div><div>CHECK IN</div><div>CHECK OUT</div><div>HOURS</div><div>STATUS</div>
                 </div>
-              ))}
+                {myDays.length === 0 && <div style={{ padding: "16px 10px", color: "#a29dbb", fontSize: 13.5 }}>No attendance recorded yet.</div>}
+                {myDays.map((dd, i) => (
+                  <div key={i} className="rp-tbl-5" style={{ display: "grid", gridTemplateColumns: "1.4fr 0.9fr 0.9fr 0.7fr 1fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5 }}>
+                    <div style={{ fontWeight: 600 }}>{dd.date}</div>
+                    <div style={{ color: "#57506e" }}>{dd.in}</div>
+                    <div style={{ color: "#57506e" }}>{dd.out}</div>
+                    <div style={{ color: "#57506e" }}>{dd.hours}</div>
+                    <div><span style={{ fontSize: 11.5, fontWeight: 700, padding: "4px 11px", borderRadius: 999, background: dd.pillBg, color: dd.pillColor }}>{dd.status}</span></div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -805,7 +854,10 @@ export default function AttendancePortal() {
                   <input type="date" value={lvTo} onChange={(e) => setLvTo(e.target.value)} style={{ padding: "12px 14px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 13.5, color: "#2b2440", outline: "none", boxSizing: "border-box", width: "100%" }} />
                 </div>
                 <textarea placeholder="Reason…" value={lvReason} onChange={(e) => setLvReason(e.target.value)} rows={3} style={{ padding: "12px 14px", borderRadius: 13, border: "1px solid rgba(109,90,230,0.18)", background: "rgba(255,255,255,0.7)", fontSize: 14, color: "#2b2440", outline: "none", resize: "vertical", boxSizing: "border-box", width: "100%" }}></textarea>
-                <button onClick={submitLeave} style={{ padding: 13, border: "none", borderRadius: 14, background: "linear-gradient(135deg,#6d5ae6,#8b74f0)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 20px rgba(109,90,230,0.3)" }}>Submit request</button>
+                <button onClick={submitLeave} disabled={lvLoading} style={{ padding: 13, border: "none", borderRadius: 14, background: "linear-gradient(135deg,#6d5ae6,#8b74f0)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: lvLoading ? "not-allowed" : "pointer", opacity: lvLoading ? 0.7 : 1, boxShadow: "0 8px 20px rgba(109,90,230,0.3)" }}>{lvLoading ? "Submitting…" : "Submit request"}</button>
+                {lvError && (
+                  <div style={{ padding: "11px 14px", borderRadius: 12, background: "rgba(226,85,123,0.10)", border: "1px solid rgba(226,85,123,0.25)", color: "#b13a60", fontSize: 13, fontWeight: 600 }}>{lvError}</div>
+                )}
                 {lvSent && (
                   <div style={{ padding: "11px 14px", borderRadius: 12, background: "rgba(31,169,122,0.10)", border: "1px solid rgba(31,169,122,0.25)", color: "#147a58", fontSize: 13, fontWeight: 600 }}>Request sent — pending admin approval.</div>
                 )}
@@ -855,11 +907,11 @@ export default function AttendancePortal() {
           <button aria-label="Close menu" onClick={() => setMobileNavOpen(false)} className="rp-sidebar-close">✕</button>
         </div>
         <div className="rp-sidebar-nav">
-        {navItems.map((nv) => (
-          <button key={nv.key} onClick={() => { nv.go(); setMobileNavOpen(false); }} className="rp-nav-btn" style={nv.active
-            ? { textAlign: "left", padding: "12px 16px", border: "none", borderRadius: 14, background: "linear-gradient(135deg,#6d5ae6,#8b74f0)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 16px rgba(109,90,230,0.3)" }
-            : { textAlign: "left", padding: "12px 16px", border: "none", borderRadius: 14, background: "transparent", color: "#57506e", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>{nv.label}</button>
-        ))}
+          {navItems.map((nv) => (
+            <button key={nv.key} onClick={() => { nv.go(); setMobileNavOpen(false); }} className="rp-nav-btn" style={nv.active
+              ? { textAlign: "left", padding: "12px 16px", border: "none", borderRadius: 14, background: "linear-gradient(135deg,#6d5ae6,#8b74f0)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 16px rgba(109,90,230,0.3)" }
+              : { textAlign: "left", padding: "12px 16px", border: "none", borderRadius: 14, background: "transparent", color: "#57506e", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>{nv.label}</button>
+          ))}
         </div>
         <div className="rp-sidebar-spacer" style={{ flex: 1 }}></div>
         <button onClick={logout} className="rp-nav-btn" style={{ padding: 12, border: "1px solid rgba(109,90,230,0.22)", borderRadius: 14, background: "rgba(255,255,255,0.55)", color: "#5a48c9", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>Logout</button>
@@ -956,33 +1008,33 @@ export default function AttendancePortal() {
             </div>
             <div className="rp-card" style={{ ...glass, padding: "22px 26px" }}>
               <div className="rp-table-scroll">
-              <div className="rp-tbl-7" style={{ display: "grid", gridTemplateColumns: "1.8fr 1.8fr 1fr 1fr 1fr 0.8fr 1.4fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
-                <div>NAME</div><div>EMAIL</div><div>FACULTY ID</div><div>DEPARTMENT</div><div>BRANCH</div><div>ROLE</div><div></div>
-              </div>
-              <div style={{ maxHeight: 520, overflowY: "auto" }}>
-                {usersLoading && <div style={{ padding: "16px 10px", color: "#a29dbb", fontSize: 13.5 }}>Loading faculty…</div>}
-                {!usersLoading && dbUsers.length === 0 && <div style={{ padding: "16px 10px", color: "#a29dbb", fontSize: 13.5 }}>No accounts yet — create the first one above.</div>}
-                {dbUsers.map((u) => {
-                  const p = u.role === "ADMIN" ? { bg: "rgba(109,90,230,0.12)", color: "#5a48c9" } : { bg: "rgba(31,169,122,0.14)", color: "#147a58" };
-                  return (
-                    <div key={u.id} className="rp-tbl-7" style={{ display: "grid", gridTemplateColumns: "1.8fr 1.8fr 1fr 1fr 1fr 0.8fr 1.4fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                        <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg,#6d5ae6,#a78bfa)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 11, flexShrink: 0 }}>{initials(u.name)}</div>
-                        <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</div>
+                <div className="rp-tbl-7" style={{ display: "grid", gridTemplateColumns: "1.8fr 1.8fr 1fr 1fr 1fr 0.8fr 1.4fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
+                  <div>NAME</div><div>EMAIL</div><div>FACULTY ID</div><div>DEPARTMENT</div><div>BRANCH</div><div>ROLE</div><div></div>
+                </div>
+                <div style={{ maxHeight: 520, overflowY: "auto" }}>
+                  {usersLoading && <div style={{ padding: "16px 10px", color: "#a29dbb", fontSize: 13.5 }}>Loading faculty…</div>}
+                  {!usersLoading && dbUsers.length === 0 && <div style={{ padding: "16px 10px", color: "#a29dbb", fontSize: 13.5 }}>No accounts yet — create the first one above.</div>}
+                  {dbUsers.map((u) => {
+                    const p = u.role === "ADMIN" ? { bg: "rgba(109,90,230,0.12)", color: "#5a48c9" } : { bg: "rgba(31,169,122,0.14)", color: "#147a58" };
+                    return (
+                      <div key={u.id} className="rp-tbl-7" style={{ display: "grid", gridTemplateColumns: "1.8fr 1.8fr 1fr 1fr 1fr 0.8fr 1.4fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                          <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg,#6d5ae6,#a78bfa)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 11, flexShrink: 0 }}>{initials(u.name)}</div>
+                          <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</div>
+                        </div>
+                        <div style={{ color: "#57506e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.email}</div>
+                        <div style={{ color: "#57506e" }}>{u.employeeCode || "—"}</div>
+                        <div style={{ color: "#57506e" }}>{u.department}</div>
+                        <div style={{ color: "#57506e" }}>{u.branch}</div>
+                        <div><span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: p.bg, color: p.color }}>{u.role}</span></div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => openResetPassword(u)} style={{ padding: "6px 12px", border: "1px solid rgba(109,90,230,0.28)", borderRadius: 10, background: "transparent", color: "#5a48c9", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Reset password</button>
+                          <button onClick={() => removeUser(u.id)} disabled={u.id === session.user.id} style={{ padding: "6px 12px", border: "1px solid rgba(226,85,123,0.3)", borderRadius: 10, background: "transparent", color: "#b13a60", fontSize: 12, fontWeight: 700, cursor: u.id === session.user.id ? "not-allowed" : "pointer", opacity: u.id === session.user.id ? 0.4 : 1 }}>Remove</button>
+                        </div>
                       </div>
-                      <div style={{ color: "#57506e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.email}</div>
-                      <div style={{ color: "#57506e" }}>{u.employeeCode || "—"}</div>
-                      <div style={{ color: "#57506e" }}>{u.department}</div>
-                      <div style={{ color: "#57506e" }}>{u.branch}</div>
-                      <div><span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: p.bg, color: p.color }}>{u.role}</span></div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={() => openResetPassword(u)} style={{ padding: "6px 12px", border: "1px solid rgba(109,90,230,0.28)", borderRadius: 10, background: "transparent", color: "#5a48c9", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Reset password</button>
-                        <button onClick={() => removeUser(u.id)} disabled={u.id === session.user.id} style={{ padding: "6px 12px", border: "1px solid rgba(226,85,123,0.3)", borderRadius: 10, background: "transparent", color: "#b13a60", fontSize: 12, fontWeight: 700, cursor: u.id === session.user.id ? "not-allowed" : "pointer", opacity: u.id === session.user.id ? 0.4 : 1 }}>Remove</button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -1094,24 +1146,24 @@ export default function AttendancePortal() {
             </div>
             <div className="rp-card" style={{ ...glass, padding: "22px 26px" }}>
               <div className="rp-table-scroll">
-              <div className="rp-tbl-8" style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
-                <div>FACULTY</div><div>DEPARTMENT</div><div>PRESENT</div><div>LATE</div><div>ABSENT</div><div>LEAVE</div><div>HOURS</div><div>DEDUCTION</div>
-              </div>
-              <div style={{ maxHeight: 560, overflowY: "auto" }}>
-                {filteredReportRows.length === 0 && <div style={{ padding: "16px 10px", color: "#a29dbb", fontSize: 13.5 }}>No matching records.</div>}
-                {filteredReportRows.map((r, i) => (
-                  <div key={i} className="rp-tbl-8" style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5, background: r.rowBg, borderRadius: 10 }}>
-                    <div style={{ fontWeight: 600 }}>{r.name}</div>
-                    <div style={{ color: "#57506e" }}>{r.dept}</div>
-                    <div style={{ fontWeight: 600, color: "#147a58" }}>{r.present}</div>
-                    <div style={{ fontWeight: 700, color: r.lateColor }}>{r.late}</div>
-                    <div style={{ color: "#57506e" }}>{r.absent}</div>
-                    <div style={{ color: "#57506e" }}>{r.leave}</div>
-                    <div style={{ color: "#57506e" }}>{r.hours}h</div>
-                    <div style={{ fontWeight: 700, color: r.cutColor }}>{r.cut}</div>
-                  </div>
-                ))}
-              </div>
+                <div className="rp-tbl-8" style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
+                  <div>FACULTY</div><div>DEPARTMENT</div><div>PRESENT</div><div>LATE</div><div>ABSENT</div><div>LEAVE</div><div>HOURS</div><div>DEDUCTION</div>
+                </div>
+                <div style={{ maxHeight: 560, overflowY: "auto" }}>
+                  {filteredReportRows.length === 0 && <div style={{ padding: "16px 10px", color: "#a29dbb", fontSize: 13.5 }}>No matching records.</div>}
+                  {filteredReportRows.map((r, i) => (
+                    <div key={i} className="rp-tbl-8" style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5, background: r.rowBg, borderRadius: 10 }}>
+                      <div style={{ fontWeight: 600 }}>{r.name}</div>
+                      <div style={{ color: "#57506e" }}>{r.dept}</div>
+                      <div style={{ fontWeight: 600, color: "#147a58" }}>{r.present}</div>
+                      <div style={{ fontWeight: 700, color: r.lateColor }}>{r.late}</div>
+                      <div style={{ color: "#57506e" }}>{r.absent}</div>
+                      <div style={{ color: "#57506e" }}>{r.leave}</div>
+                      <div style={{ color: "#57506e" }}>{r.hours}h</div>
+                      <div style={{ fontWeight: 700, color: r.cutColor }}>{r.cut}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -1155,7 +1207,7 @@ export default function AttendancePortal() {
 
         {tab === "lea" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp .4s ease" }}>
-            <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Leave requests <span style={{ fontSize: 16, color: "#a29dbb", fontWeight: 600 }}>· {leaves.filter((l) => l.status === "Pending").length} pending</span></div>
+            <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Leave requests <span style={{ fontSize: 16, color: "#a29dbb", fontWeight: 600 }}>· {leaves.filter((l) => l.status === "PENDING").length} pending</span></div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {leaveRows.map((l) => (
                 <div key={l.id} className="rp-leave-card rp-card" style={{ ...glass, borderRadius: 20, boxShadow: "0 10px 32px rgba(109,90,230,0.10)", padding: "20px 24px", display: "flex", alignItems: "center", gap: 18 }}>
@@ -1171,7 +1223,7 @@ export default function AttendancePortal() {
                     </div>
                   )}
                   {l.decided && (
-                    <span style={{ fontSize: 12, fontWeight: 700, padding: "6px 14px", borderRadius: 999, background: l.stBg, color: l.stColor }}>{l.status}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, padding: "6px 14px", borderRadius: 999, background: l.stBg, color: l.stColor }}>{l.displayStatus}</span>
                   )}
                 </div>
               ))}
