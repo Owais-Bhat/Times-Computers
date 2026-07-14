@@ -115,6 +115,26 @@ function isToday(iso: string) {
   const n = new Date();
   return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
 }
+function csvCell(value: string | number) {
+  const s = String(value);
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function downloadMonthlyReportCsv(rows: { name: string; dept: string; present: number; late: number; absent: number; leave: number; hours: number; cut: string }[]) {
+  const headers = ["Faculty", "Department", "Present", "Late", "Absent", "Leave", "Hours", "Deduction"];
+  const lines = [headers, ...rows.map((r) => [r.name, r.dept, r.present, r.late, r.absent, r.leave, r.hours, r.cut])].map((row) =>
+    row.map(csvCell).join(",")
+  );
+  const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const month = new Date().toLocaleDateString("en-US", { year: "numeric", month: "2-digit" });
+  a.href = url;
+  a.download = `monthly-report-${month}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 export default function AttendancePortal() {
   const { data: session, status } = useSession();
@@ -921,7 +941,13 @@ export default function AttendancePortal() {
           <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp .4s ease" }}>
             <div className="rp-header-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div className="rp-page-title" style={{ fontFamily: sora, fontWeight: 800, fontSize: 26, letterSpacing: "-0.5px" }}>Monthly report</div>
-              <button style={{ padding: "11px 20px", border: "1px solid rgba(109,90,230,0.25)", borderRadius: 12, background: "rgba(255,255,255,0.6)", color: "#5a48c9", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>Export CSV</button>
+              <button
+                onClick={() => downloadMonthlyReportCsv(filteredReportRows)}
+                disabled={filteredReportRows.length === 0}
+                style={{ padding: "11px 20px", border: "1px solid rgba(109,90,230,0.25)", borderRadius: 12, background: "rgba(255,255,255,0.6)", color: "#5a48c9", fontSize: 13.5, fontWeight: 700, cursor: filteredReportRows.length === 0 ? "not-allowed" : "pointer", opacity: filteredReportRows.length === 0 ? 0.5 : 1 }}
+              >
+                Export CSV
+              </button>
             </div>
             <div className="rp-stats-3" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
               <div className="rp-card" style={{ ...glass, borderRadius: 20, padding: "20px 24px", boxShadow: "0 12px 40px rgba(109,90,230,0.10)" }}>
