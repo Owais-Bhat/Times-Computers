@@ -160,6 +160,12 @@ export default function AttendancePortal() {
   const [neRoleField, setNeRoleField] = useState<"ADMIN" | "EMPLOYEE">("EMPLOYEE");
   const [createUserError, setCreateUserError] = useState<string | null>(null);
   const [createUserLoading, setCreateUserLoading] = useState(false);
+  const [resetPwUser, setResetPwUser] = useState<DbUser | null>(null);
+  const [resetPwValue, setResetPwValue] = useState("");
+  const [resetPwConfirm, setResetPwConfirm] = useState("");
+  const [resetPwError, setResetPwError] = useState<string | null>(null);
+  const [resetPwLoading, setResetPwLoading] = useState(false);
+  const [resetPwDone, setResetPwDone] = useState<string | null>(null);
 
   // Real attendance state
   const [myRecords, setMyRecords] = useState<AttendanceRecord[]>([]);
@@ -368,6 +374,48 @@ export default function AttendancePortal() {
     const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
     if (res.ok) {
       setDbUsers((us) => us.filter((u) => u.id !== id));
+    }
+  }
+
+  function openResetPassword(u: DbUser) {
+    setResetPwUser(u);
+    setResetPwValue("");
+    setResetPwConfirm("");
+    setResetPwError(null);
+  }
+
+  function closeResetPassword() {
+    setResetPwUser(null);
+    setResetPwValue("");
+    setResetPwConfirm("");
+    setResetPwError(null);
+    setResetPwLoading(false);
+  }
+
+  async function submitResetPassword() {
+    if (!resetPwUser) return;
+    setResetPwError(null);
+    if (resetPwValue !== resetPwConfirm) {
+      setResetPwError("Passwords do not match.");
+      return;
+    }
+    setResetPwLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${resetPwUser.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: resetPwValue }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setResetPwError(data.error || "Failed to reset password.");
+        return;
+      }
+      setResetPwDone(resetPwUser.name);
+      closeResetPassword();
+      setTimeout(() => setResetPwDone(null), 4000);
+    } finally {
+      setResetPwLoading(false);
     }
   }
 
@@ -908,7 +956,7 @@ export default function AttendancePortal() {
             </div>
             <div className="rp-card" style={{ ...glass, padding: "22px 26px" }}>
               <div className="rp-table-scroll">
-              <div className="rp-tbl-7" style={{ display: "grid", gridTemplateColumns: "1.8fr 1.8fr 1fr 1fr 1fr 0.8fr 0.8fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
+              <div className="rp-tbl-7" style={{ display: "grid", gridTemplateColumns: "1.8fr 1.8fr 1fr 1fr 1fr 0.8fr 1.4fr", gap: "0 12px", fontSize: 12, fontWeight: 700, color: "#a29dbb", letterSpacing: "0.6px", padding: "0 10px 10px", borderBottom: "1px solid rgba(109,90,230,0.12)" }}>
                 <div>NAME</div><div>EMAIL</div><div>FACULTY ID</div><div>DEPARTMENT</div><div>BRANCH</div><div>ROLE</div><div></div>
               </div>
               <div style={{ maxHeight: 520, overflowY: "auto" }}>
@@ -917,7 +965,7 @@ export default function AttendancePortal() {
                 {dbUsers.map((u) => {
                   const p = u.role === "ADMIN" ? { bg: "rgba(109,90,230,0.12)", color: "#5a48c9" } : { bg: "rgba(31,169,122,0.14)", color: "#147a58" };
                   return (
-                    <div key={u.id} className="rp-tbl-7" style={{ display: "grid", gridTemplateColumns: "1.8fr 1.8fr 1fr 1fr 1fr 0.8fr 0.8fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5 }}>
+                    <div key={u.id} className="rp-tbl-7" style={{ display: "grid", gridTemplateColumns: "1.8fr 1.8fr 1fr 1fr 1fr 0.8fr 1.4fr", gap: "0 12px", alignItems: "center", padding: "11px 10px", borderBottom: "1px solid rgba(109,90,230,0.07)", fontSize: 13.5 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
                         <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg,#6d5ae6,#a78bfa)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 11, flexShrink: 0 }}>{initials(u.name)}</div>
                         <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</div>
@@ -927,13 +975,67 @@ export default function AttendancePortal() {
                       <div style={{ color: "#57506e" }}>{u.department}</div>
                       <div style={{ color: "#57506e" }}>{u.branch}</div>
                       <div><span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: p.bg, color: p.color }}>{u.role}</span></div>
-                      <button onClick={() => removeUser(u.id)} disabled={u.id === session.user.id} style={{ padding: "6px 12px", border: "1px solid rgba(226,85,123,0.3)", borderRadius: 10, background: "transparent", color: "#b13a60", fontSize: 12, fontWeight: 700, cursor: u.id === session.user.id ? "not-allowed" : "pointer", opacity: u.id === session.user.id ? 0.4 : 1 }}>Remove</button>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={() => openResetPassword(u)} style={{ padding: "6px 12px", border: "1px solid rgba(109,90,230,0.28)", borderRadius: 10, background: "transparent", color: "#5a48c9", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Reset password</button>
+                        <button onClick={() => removeUser(u.id)} disabled={u.id === session.user.id} style={{ padding: "6px 12px", border: "1px solid rgba(226,85,123,0.3)", borderRadius: 10, background: "transparent", color: "#b13a60", fontSize: 12, fontWeight: 700, cursor: u.id === session.user.id ? "not-allowed" : "pointer", opacity: u.id === session.user.id ? 0.4 : 1 }}>Remove</button>
+                      </div>
                     </div>
                   );
                 })}
               </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {resetPwUser && (
+          <div
+            onClick={closeResetPassword}
+            style={{ position: "fixed", inset: 0, background: "rgba(30,24,54,0.35)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}
+          >
+            <div onClick={(e) => e.stopPropagation()} style={{ ...glass, background: "rgba(255,255,255,0.96)", padding: "28px 30px", width: 380, maxWidth: "100%", boxSizing: "border-box" }}>
+              <div style={{ fontFamily: sora, fontWeight: 800, fontSize: 18 }}>Reset password</div>
+              <div style={{ fontSize: 13.5, color: "#6f6a85", marginTop: 4, marginBottom: 18 }}>
+                Set a new password for <b>{resetPwUser.name}</b> ({resetPwUser.email}).
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <input
+                  type="password"
+                  placeholder="New password"
+                  value={resetPwValue}
+                  onChange={(e) => setResetPwValue(e.target.value)}
+                  style={inputStyle}
+                  autoFocus
+                />
+                <input
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={resetPwConfirm}
+                  onChange={(e) => setResetPwConfirm(e.target.value)}
+                  style={inputStyle}
+                />
+                {resetPwError && (
+                  <div style={{ padding: "10px 14px", borderRadius: 12, background: "rgba(226,85,123,0.10)", border: "1px solid rgba(226,85,123,0.25)", color: "#b13a60", fontSize: 13, fontWeight: 600 }}>{resetPwError}</div>
+                )}
+                <div style={{ fontSize: 12, color: "#a29dbb" }}>At least 8 characters, with an uppercase letter, a lowercase letter, and a number.</div>
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "flex-end" }}>
+                <button onClick={closeResetPassword} style={{ padding: "10px 18px", border: "1px solid rgba(109,90,230,0.2)", borderRadius: 12, background: "transparent", color: "#57506e", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>Cancel</button>
+                <button
+                  onClick={submitResetPassword}
+                  disabled={resetPwLoading || !resetPwValue}
+                  style={{ padding: "10px 20px", border: "none", borderRadius: 12, background: "linear-gradient(135deg,#6d5ae6,#8b74f0)", color: "#fff", fontSize: 13.5, fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 16px rgba(109,90,230,0.3)", opacity: resetPwLoading || !resetPwValue ? 0.6 : 1 }}
+                >
+                  {resetPwLoading ? "Saving…" : "Save new password"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {resetPwDone && (
+          <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 1000, padding: "14px 20px", borderRadius: 14, background: "rgba(31,169,122,0.95)", color: "#fff", fontSize: 13.5, fontWeight: 700, boxShadow: "0 12px 30px rgba(31,169,122,0.3)" }}>
+            Password reset for {resetPwDone}
           </div>
         )}
 

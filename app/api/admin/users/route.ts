@@ -4,16 +4,18 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
+export const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .max(200)
+  .regex(/[A-Z]/, "Password must contain an uppercase letter")
+  .regex(/[a-z]/, "Password must contain a lowercase letter")
+  .regex(/[0-9]/, "Password must contain a number");
+
 const createUserSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
   email: z.string().trim().email("Invalid email address").max(200),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(200)
-    .regex(/[A-Z]/, "Password must contain an uppercase letter")
-    .regex(/[a-z]/, "Password must contain a lowercase letter")
-    .regex(/[0-9]/, "Password must contain a number"),
+  password: passwordSchema,
   role: z.enum(["ADMIN", "EMPLOYEE"]).default("EMPLOYEE"),
   department: z.string().trim().min(1).max(100).default("General"),
   jobTitle: z.string().trim().min(1).max(100).default("Staff"),
